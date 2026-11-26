@@ -215,6 +215,13 @@ function renderFeaturedSpotlight() {
   }
 
   if (game.thumbnail && isSafeIframeUrl(game.thumbnail)) {
+    elements.featuredImg.dataset.fb = '';
+    elements.featuredImg.onerror = () => {
+      if (!elements.featuredImg.dataset.fb && game.thumbnail.startsWith('./assets/')) {
+        elements.featuredImg.dataset.fb = '1';
+        elements.featuredImg.src = `./public/${game.thumbnail.slice(2)}`;
+      }
+    };
     elements.featuredImg.src = game.thumbnail;
     elements.featuredImg.alt = `${game.title} cover illustration`;
   }
@@ -323,6 +330,15 @@ function openGamePreview(gameId) {
   elements.previewControls.textContent = game.controls || 'Keyboard or Mouse';
 
   if (game.thumbnail && isSafeIframeUrl(game.thumbnail)) {
+    elements.previewImg.dataset.fb = '';
+    elements.previewImg.onerror = () => {
+      if (!elements.previewImg.dataset.fb && game.thumbnail.startsWith('./assets/')) {
+        elements.previewImg.dataset.fb = '1';
+        elements.previewImg.src = `./public/${game.thumbnail.slice(2)}`;
+      } else {
+        elements.previewImg.hidden = true;
+      }
+    };
     elements.previewImg.src = game.thumbnail;
     elements.previewImg.alt = `${game.title} cover artwork`;
     elements.previewImg.hidden = false;
@@ -443,6 +459,11 @@ function buildThumbnailSlot(game) {
     img.loading = 'lazy';
     img.referrerPolicy = 'no-referrer';
     img.addEventListener('error', () => {
+      if (!img.dataset.fb && game.thumbnail.startsWith('./assets/')) {
+        img.dataset.fb = '1';
+        img.src = `./public/${game.thumbnail.slice(2)}`;
+        return;
+      }
       img.remove();
       wrap.appendChild(fallback);
     });

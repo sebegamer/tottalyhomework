@@ -14,7 +14,7 @@
       "Loop along the outer edges to keep the center open for safe escapes.",
       "Touch directional buttons appear automatically on smaller screens."
     ],
-    "thumbnail": "./src/assets/images/game_cover_snake_1795734863750.jpg",
+    "thumbnail": "./assets/images/game_cover_snake_1795734863750.jpg",
     "iframe": "<iframe src=\"./games/snake.html\" title=\"Grid Snake\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/snake.html"
   },
@@ -33,7 +33,7 @@
       "Aim to punch a tunnel up one side so the ball bounces above the top row.",
       "Each new round speeds up the ball—stay centered between volleys."
     ],
-    "thumbnail": "./src/assets/images/game_cover_breakout_1795734864364.jpg",
+    "thumbnail": "./assets/images/game_cover_breakout_1795734864364.jpg",
     "iframe": "<iframe src=\"./games/breakout.html\" title=\"Brick Breaker\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/breakout.html"
   },
@@ -52,7 +52,7 @@
       "Build descending chains along the edge next to your anchor corner.",
       "Use the Undo button if a forced move breaks your tile order."
     ],
-    "thumbnail": "./src/assets/images/game_cover_puzzle2048_1795734865213.jpg",
+    "thumbnail": "./assets/images/game_cover_puzzle2048_1795734865213.jpg",
     "iframe": "<iframe src=\"./games/2048.html\" title=\"2048 Slide\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/2048.html"
   },
@@ -71,7 +71,7 @@
       "Switch between 9x9 (10 mines) and 12x12 (22 mines) in the top bar.",
       "Toggle Mode: Flag for fast one-handed flagging on trackpads or touchscreens."
     ],
-    "thumbnail": "./src/assets/images/game_cover_minesweeper_1795734865129.jpg",
+    "thumbnail": "./assets/images/game_cover_minesweeper_1795734865129.jpg",
     "iframe": "<iframe src=\"./games/minesweeper.html\" title=\"Minesweeper\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/minesweeper.html"
   },
@@ -90,7 +90,7 @@
       "Remember screen wrap—shots and asteroids cross from one edge to the opposite side.",
       "Clear smaller fast fragments before splitting another large rock."
     ],
-    "thumbnail": "./src/assets/images/game_cover_asteroids_1795734865467.jpg",
+    "thumbnail": "./assets/images/game_cover_asteroids_1795734865467.jpg",
     "iframe": "<iframe src=\"./games/asteroids.html\" title=\"Asteroids Drift\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/asteroids.html"
   },
@@ -109,7 +109,7 @@
       "Pay close attention to unmatched flips—every mismatch teaches two positions.",
       "Use New Shuffle anytime to beat your saved fewest-moves record."
     ],
-    "thumbnail": "./src/assets/images/game_cover_memory_1795734866266.jpg",
+    "thumbnail": "./assets/images/game_cover_memory_1795734866266.jpg",
     "iframe": "<iframe src=\"./games/memory.html\" title=\"Memory Match\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/memory.html"
   }
