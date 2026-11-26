@@ -70,7 +70,10 @@ function isSafeIframeUrl(rawUrl) {
   if (typeof rawUrl !== 'string') return false;
   const trimmed = rawUrl.trim();
   if (!trimmed) return false;
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+  if (trimmed.startsWith('./') && !trimmed.includes('..')) {
+    return true;
+  }
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.includes('..')) {
     return true;
   }
   try {
@@ -530,7 +533,12 @@ async function loadGamesCatalog() {
   elements.gamesStatus.textContent = 'Loading games...';
 
   try {
-    const response = await fetch('/games.json', { cache: 'no-store' });
+    let usedPublicPrefix = false;
+    let response = await fetch('./games.json', { cache: 'no-store' });
+    if (!response.ok) {
+      response = await fetch('./public/games.json', { cache: 'no-store' });
+      usedPublicPrefix = true;
+    }
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -538,7 +546,18 @@ async function loadGamesCatalog() {
     if (!Array.isArray(data)) {
       throw new Error('games.json must contain an array of games.');
     }
-    state.catalogGames = data.filter((item) => item && typeof item.id === 'string');
+    state.catalogGames = data
+      .filter((item) => item && typeof item.id === 'string')
+      .map((item) => {
+        if (!usedPublicPrefix) return item;
+        const rawSrc = typeof item.iframeSrc === 'string' ? item.iframeSrc.trim() : '';
+        const adjustedSrc = rawSrc.startsWith('./games/')
+          ? `./public/${rawSrc.slice(2)}`
+          : rawSrc.startsWith('/games/')
+            ? `./public${rawSrc}`
+            : rawSrc;
+        return { ...item, iframeSrc: adjustedSrc };
+      });
     const asteroidsIdx = state.catalogGames.findIndex((g) => g.id === 'asteroids-drift');
     state.featuredIndex = asteroidsIdx >= 0 ? asteroidsIdx : 0;
     updateMetrics();
