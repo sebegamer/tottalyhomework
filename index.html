@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Totally Homework — Unblocked Browser Games</title>
+    <meta
+      name="description"
+      content="Totally Homework — instant unblocked browser games ready to play."
+    />
+    <meta property="og:title" content="Totally Homework — Unblocked Browser Games" />
+    <meta
+      property="og:description"
+      content="Totally Homework — instant unblocked browser games ready to play."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="ambient-backdrop" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="#" id="brand-link" class="brand-wordmark">Totally Homework</a>
+
+        <nav class="main-nav" aria-label="Game categories">
+          <button type="button" class="nav-link is-active" data-nav-category="All">
+            All Games
+          </button>
+          <button type="button" class="nav-link" data-nav-category="Arcade">
+            Arcade
+          </button>
+          <button type="button" class="nav-link" data-nav-category="Puzzle">
+            Puzzle
+          </button>
+          <button type="button" class="nav-link" data-nav-category="Action">
+            Action
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <button type="button" id="random-game-btn" class="btn-primary">
+            Random Game
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main-container" class="main-container">
+      <!-- Active Iframe Theatre -->
+      <section id="player-section" class="player-section" hidden aria-live="polite">
+        <div class="player-bar">
+          <div class="player-meta">
+            <h2 id="player-title" class="player-title">Game Title</h2>
+            <p id="player-subtitle" class="player-subtitle">Category · Controls</p>
+          </div>
+          <div class="player-controls">
+            <button type="button" id="player-info-btn" class="btn-secondary">
+              Game Info
+            </button>
+            <button type="button" id="favorite-player-btn" class="btn-secondary">
+              Save
+            </button>
+            <button type="button" id="theater-mode-btn" class="btn-secondary">
+              Wide View
+            </button>
+            <button type="button" id="reload-game-btn" class="btn-secondary">
+              Reload
+            </button>
+            <button type="button" id="fullscreen-game-btn" class="btn-secondary">
+              Fullscreen
+            </button>
+            <button type="button" id="close-player-btn" class="btn-secondary">
+              Close
+            </button>
+          </div>
+        </div>
+        <div id="iframe-stage" class="iframe-stage"></div>
+        <div class="player-footer">
+          <span id="player-controls-tip" class="player-controls-tip">Controls: Keyboard or Mouse</span>
+          <span class="player-esc-hint">Press Fullscreen for distraction-free play</span>
+        </div>
+      </section>
+
+      <!-- Hero Spotlight -->
+      <section id="hero-section" class="hero-section">
+        <div class="hero-left">
+          <div class="hero-copy">
+            <h1 class="hero-headline">Instant browser games, zero clutter.</h1>
+            <p id="hero-lead" class="hero-lead">
+              Asteroids Drift — Pilot your starship through deep space, split drifting asteroids, and survive escalating waves.
+            </p>
+          </div>
+
+          <div class="hero-cta-row">
+            <button type="button" id="hero-play-featured-btn" class="btn-primary btn-lg">
+              Play Featured Game
+            </button>
+            <a href="#catalog-toolbar" class="btn-secondary btn-lg">
+              Browse Library
+            </a>
+          </div>
+
+          <div class="hero-metrics" aria-label="Catalog summary">
+            <div class="metric-item">
+              <span id="metric-total" class="metric-value tabular-nums">0</span>
+              <span class="metric-label">Games in catalog</span>
+            </div>
+            <div class="metric-divider" aria-hidden="true"></div>
+            <div class="metric-item">
+              <span id="metric-categories" class="metric-value tabular-nums">3</span>
+              <span class="metric-label">Genres</span>
+            </div>
+            <div class="metric-divider" aria-hidden="true"></div>
+            <div class="metric-item">
+              <span id="metric-saved" class="metric-value tabular-nums">0</span>
+              <span class="metric-label">Saved favorites</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-spotlight" aria-label="Featured game">
+          <div id="featured-card" class="featured-card">
+            <div class="featured-media">
+              <img
+                id="featured-img"
+                class="featured-img"
+                src="/src/assets/images/game_cover_asteroids_1795734865467.jpg"
+                alt="Featured game cover"
+                referrerpolicy="no-referrer"
+              />
+              <div class="featured-scrim" aria-hidden="true"></div>
+              <div class="featured-overlay">
+                <div class="featured-top-row">
+                  <span id="featured-meta" class="featured-meta">Featured · Action</span>
+                  <div class="featured-nav">
+                    <button
+                      type="button"
+                      id="featured-prev-btn"
+                      class="icon-btn"
+                      aria-label="Previous featured game"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      id="featured-next-btn"
+                      class="icon-btn"
+                      aria-label="Next featured game"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="featured-bottom-row">
+                  <div class="featured-text">
+                    <h2 id="featured-title" class="featured-title">Asteroids Drift</h2>
+                    <p id="featured-desc" class="featured-desc">
+                      Pilot your starship through deep space and clear escalating waves.
+                    </p>
+                  </div>
+                  <button type="button" id="featured-launch-btn" class="btn-primary">
+                    Launch
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Recently Played Strip -->
+      <section id="recent-section" class="recent-section" hidden aria-label="Recently played games">
+        <div class="recent-header">
+          <h2 class="section-heading">Recently Played</h2>
+          <button type="button" id="clear-recent-btn" class="text-action-btn">Clear</button>
+        </div>
+        <div id="recent-list" class="recent-list"></div>
+      </section>
+
+      <!-- Workspace Toolbar -->
+      <section id="catalog-toolbar" class="toolbar-section" aria-label="Filter and manage games">
+        <div id="category-tabs" class="segmented-tabs" role="tablist" aria-label="Filter by category">
+          <button type="button" class="tab-btn is-active" data-category="All" role="tab" aria-selected="true">
+            All
+          </button>
+          <button type="button" class="tab-btn" data-category="Arcade" role="tab" aria-selected="false">
+            Arcade
+          </button>
+          <button type="button" class="tab-btn" data-category="Puzzle" role="tab" aria-selected="false">
+            Puzzle
+          </button>
+          <button type="button" class="tab-btn" data-category="Action" role="tab" aria-selected="false">
+            Action
+          </button>
+          <button type="button" class="tab-btn" data-category="Favorites" role="tab" aria-selected="false">
+            Saved
+          </button>
+        </div>
+
+        <div class="toolbar-right">
+          <label class="search-field" for="search-input">
+            <span class="sr-only">Search games</span>
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input
+              id="search-input"
+              type="search"
+              placeholder="Search games..."
+              autocomplete="off"
+            />
+          </label>
+          <button type="button" id="theme-toggle-btn" class="btn-secondary">
+            Light Theme
+          </button>
+        </div>
+      </section>
+
+      <!-- Game Library Grid -->
+      <section aria-label="Game library">
+        <div id="games-status" class="status-message" hidden></div>
+        <div id="games-grid" class="games-grid"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Totally Homework</span>
+        <span aria-hidden="true">·</span>
+        <span>Unblocked Browser Arcade</span>
+      </div>
+    </footer>
+
+    <!-- Pre-Game Briefing Modal -->
+    <div id="preview-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="preview-title">
+      <div class="modal-panel modal-panel-briefing">
+        <div class="modal-header">
+          <div class="briefing-header-meta">
+            <span id="preview-kicker" class="briefing-kicker">Arcade · Easy · 1 Player</span>
+            <h2 id="preview-title" class="modal-title briefing-title">Game Title</h2>
+          </div>
+          <button type="button" id="preview-close-btn" class="btn-secondary">
+            Close
+          </button>
+        </div>
+
+        <div class="briefing-hero">
+          <div id="preview-thumb-wrap" class="briefing-thumb-wrap">
+            <img id="preview-img" class="briefing-img" src="" alt="" referrerpolicy="no-referrer" />
+          </div>
+          <div class="briefing-details">
+            <p id="preview-overview" class="briefing-overview"></p>
+
+            <dl class="briefing-specs">
+              <div class="spec-item">
+                <dt>Difficulty</dt>
+                <dd id="preview-difficulty">Medium</dd>
+              </div>
+              <div class="spec-item">
+                <dt>Session Length</dt>
+                <dd id="preview-time" class="tabular-nums">3–8 min</dd>
+              </div>
+              <div class="spec-item">
+                <dt>Players</dt>
+                <dd id="preview-players">1 Player</dd>
+              </div>
+              <div class="spec-item">
+                <dt>Controls</dt>
+                <dd id="preview-controls">Arrow keys</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="briefing-tips-section">
+          <h3 class="briefing-subheading">Quick Tips</h3>
+          <ul id="preview-tips" class="briefing-tips"></ul>
+        </div>
+
+        <div class="modal-actions briefing-actions">
+          <button type="button" id="preview-save-btn" class="btn-secondary">Save</button>
+          <button type="button" id="preview-start-btn" class="btn-primary btn-lg">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

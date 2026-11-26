@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memory Match</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #09101d;
+        color: #f8fafc;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        user-select: none;
+      }
+      .shell {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 16px;
+        gap: 14px;
+      }
+      .hud {
+        width: 100%;
+        max-width: 460px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #131d31;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 10px 14px;
+      }
+      .stats {
+        display: flex;
+        gap: 18px;
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+      }
+      .stats strong { color: #f59e0b; }
+      button {
+        background: #1e293b;
+        color: #f8fafc;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 7px;
+        padding: 7px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover { background: #293548; }
+      .grid {
+        width: 100%;
+        max-width: 460px;
+        aspect-ratio: 1 / 1;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .card {
+        background: #182235;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 700;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+      }
+      .card:hover:not(.matched):not(.flipped) {
+        transform: translateY(-2px);
+        border-color: rgba(255,255,255,0.28);
+      }
+      .card.flipped {
+        background: #23324d;
+        border-color: #f59e0b;
+        color: #f8fafc;
+      }
+      .card.matched {
+        background: #0f3d2e;
+        border-color: #10b981;
+        color: #34d399;
+        cursor: default;
+      }
+      .status {
+        font-size: 14px;
+        color: #cbd5e1;
+        min-height: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hud">
+        <div class="stats">
+          <span>Moves: <strong id="moves">0</strong></span>
+          <span>Pairs: <strong id="pairs">0/8</strong></span>
+          <span>Best: <strong id="best">--</strong></span>
+        </div>
+        <button type="button" id="restart-btn">New Shuffle</button>
+      </div>
+
+      <div id="grid" class="grid" aria-label="Memory card grid"></div>
+      <div id="status" class="status">Flip two cards to match all 8 symbol pairs.</div>
+    </div>
+
+    <script>
+      const SYMBOLS = ['▲', '◆', '●', '★', '■', '✦', '✚', '◉'];
+      const BEST_KEY = 'deskplay_memory_best';
+
+      const gridEl = document.getElementById('grid');
+      const movesEl = document.getElementById('moves');
+      const pairsEl = document.getElementById('pairs');
+      const bestEl = document.getElementById('best');
+      const statusEl = document.getElementById('status');
+      const restartBtn = document.getElementById('restart-btn');
+
+      let bestMoves = localStorage.getItem(BEST_KEY);
+      if (bestMoves) bestEl.textContent = `${bestMoves}`;
+
+      let deck = [];
+      let flipped = [];
+      let matched = new Set();
+      let moves = 0;
+      let locked = false;
+
+      function shuffle(list) {
+        const arr = [...list];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function initGame() {
+        deck = shuffle([...SYMBOLS, ...SYMBOLS]);
+        flipped = [];
+        matched = new Set();
+        moves = 0;
+        locked = false;
+        movesEl.textContent = '0';
+        pairsEl.textContent = '0/8';
+        statusEl.textContent = 'Flip two cards to match all 8 symbol pairs.';
+        render();
+      }
+
+      function render() {
+        gridEl.replaceChildren();
+        deck.forEach((symbol, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'card';
+          const isMatched = matched.has(index);
+          const isFlipped = flipped.includes(index);
+
+          if (isMatched) {
+            btn.classList.add('matched');
+            btn.textContent = symbol;
+            btn.disabled = true;
+          } else if (isFlipped) {
+            btn.classList.add('flipped');
+            btn.textContent = symbol;
+          } else {
+            btn.textContent = '?';
+          }
+
+          btn.addEventListener('click', () => handleFlip(index));
+          gridEl.appendChild(btn);
+        });
+      }
+
+      function handleFlip(index) {
+        if (locked || flipped.includes(index) || matched.has(index)) return;
+
+        flipped.push(index);
+        render();
+
+        if (flipped.length === 2) {
+          moves += 1;
+          movesEl.textContent = String(moves);
+          const [a, b] = flipped;
+          if (deck[a] === deck[b]) {
+            matched.add(a);
+            matched.add(b);
+            flipped = [];
+            pairsEl.textContent = `${matched.size / 2}/8`;
+            render();
+
+            if (matched.size === deck.length) {
+              statusEl.textContent = `Completed in ${moves} moves!`;
+              if (!bestMoves || moves < Number(bestMoves)) {
+                bestMoves = String(moves);
+                bestEl.textContent = bestMoves;
+                localStorage.setItem(BEST_KEY, bestMoves);
+              }
+            }
+          } else {
+            locked = true;
+            setTimeout(() => {
+              flipped = [];
+              locked = false;
+              render();
+            }, 650);
+          }
+        }
+      }
+
+      restartBtn.addEventListener('click', initGame);
+      initGame();
+    </script>
+  </body>
+</html>

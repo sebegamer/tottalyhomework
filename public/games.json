@@ -1,0 +1,116 @@
+[
+  {
+    "id": "grid-snake",
+    "title": "Grid Snake",
+    "category": "Arcade",
+    "difficulty": "Easy",
+    "estimatedTime": "3–8 min",
+    "players": "1 Player",
+    "description": "Steer the snake across the grid, collect golden apples, and avoid walls or your own tail.",
+    "overview": "Guide your snake through a 20x20 arena, eating golden apples to extend your tail and build a high score. Each apple slightly increases your movement speed, turning tight corners into high-stakes maneuvers.",
+    "controls": "Arrow keys or WASD (P to pause)",
+    "tips": [
+      "Plan turns two tiles ahead once your snake grows past 15 segments.",
+      "Loop along the outer edges to keep the center open for safe escapes.",
+      "Touch directional buttons appear automatically on smaller screens."
+    ],
+    "thumbnail": "/src/assets/images/game_cover_snake_1795734863750.jpg",
+    "iframe": "<iframe src=\"/games/snake.html\" title=\"Grid Snake\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "/games/snake.html"
+  },
+  {
+    "id": "brick-breaker",
+    "title": "Brick Breaker",
+    "category": "Arcade",
+    "difficulty": "Medium",
+    "estimatedTime": "5–12 min",
+    "players": "1 Player",
+    "description": "Deflect the ball off your paddle to clear layered brick formations across progressive rounds.",
+    "overview": "Bounce the steel ball off your paddle to shatter five layered rows of colored bricks. Clearing a full formation advances you to a faster round, while missing the ball costs one of your three lives.",
+    "controls": "Mouse, Touch drag, or Left/Right arrows",
+    "tips": [
+      "Hit the ball near the edges of your paddle to send it at sharper angles.",
+      "Aim to punch a tunnel up one side so the ball bounces above the top row.",
+      "Each new round speeds up the ball—stay centered between volleys."
+    ],
+    "thumbnail": "/src/assets/images/game_cover_breakout_1795734864364.jpg",
+    "iframe": "<iframe src=\"/games/breakout.html\" title=\"Brick Breaker\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "/games/breakout.html"
+  },
+  {
+    "id": "slide-2048",
+    "title": "2048 Slide",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Merge matching number tiles on a 4x4 board to reach the 2048 tile before running out of moves.",
+    "overview": "Slide all tiles simultaneously in one of four directions on a 4x4 board. Whenever two tiles with the same number collide, they merge into their sum—keep combining values until you forge the 2048 tile.",
+    "controls": "Arrow keys, WASD, or Swipe",
+    "tips": [
+      "Keep your highest-value tile anchored in one corner of the board.",
+      "Build descending chains along the edge next to your anchor corner.",
+      "Use the Undo button if a forced move breaks your tile order."
+    ],
+    "thumbnail": "/src/assets/images/game_cover_puzzle2048_1795734865213.jpg",
+    "iframe": "<iframe src=\"/games/2048.html\" title=\"2048 Slide\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "/games/2048.html"
+  },
+  {
+    "id": "minesweeper-classic",
+    "title": "Minesweeper",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "3–10 min",
+    "players": "1 Player",
+    "description": "Uncover safe tiles using numerical adjacency clues and flag every hidden mine on the board.",
+    "overview": "Deduce where hidden mines are buried across a 9x9 or 12x12 grid. Each revealed number tells you how many mines touch that square across all eight neighboring tiles—clear every safe square without detonating a mine.",
+    "controls": "Left click reveal · Right click or Mode button to flag",
+    "tips": [
+      "Your very first click is always safe and opens a clear starting pocket.",
+      "Switch between 9x9 (10 mines) and 12x12 (22 mines) in the top bar.",
+      "Toggle Mode: Flag for fast one-handed flagging on trackpads or touchscreens."
+    ],
+    "thumbnail": "/src/assets/images/game_cover_minesweeper_1795734865129.jpg",
+    "iframe": "<iframe src=\"/games/minesweeper.html\" title=\"Minesweeper\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "/games/minesweeper.html"
+  },
+  {
+    "id": "asteroids-drift",
+    "title": "Asteroids Drift",
+    "category": "Action",
+    "difficulty": "Hard",
+    "estimatedTime": "4–12 min",
+    "players": "1 Player",
+    "description": "Pilot your starship through deep space, split drifting asteroids, and survive escalating waves.",
+    "overview": "Take control of a vector starfighter with zero-gravity momentum. Blast large asteroids into smaller, faster fragments while dodging debris across endless escalating waves with three lives.",
+    "controls": "Left/Right turn · Up thrust · Spacebar fire",
+    "tips": [
+      "Use short thrust bursts rather than holding Up continuously so you stay controllable.",
+      "Remember screen wrap—shots and asteroids cross from one edge to the opposite side.",
+      "Clear smaller fast fragments before splitting another large rock."
+    ],
+    "thumbnail": "/src/assets/images/game_cover_asteroids_1795734865467.jpg",
+    "iframe": "<iframe src=\"/games/asteroids.html\" title=\"Asteroids Drift\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "/games/asteroids.html"
+  },
+  {
+    "id": "memory-match",
+    "title": "Memory Match",
+    "category": "Puzzle",
+    "difficulty": "Easy",
+    "estimatedTime": "2–4 min",
+    "players": "1 Player",
+    "description": "Flip cards two at a time to locate all matching geometric pairs in the fewest moves.",
+    "overview": "A calm, focused visual recall challenge featuring 16 face-down geometric tiles (8 matching pairs). Flip two tiles per turn and clear the entire deck in as few moves as possible to beat your personal best.",
+    "controls": "Click or tap cards",
+    "tips": [
+      "Scan rows systematically from top-left to bottom-right on your opening turns.",
+      "Pay close attention to unmatched flips—every mismatch teaches two positions.",
+      "Use New Shuffle anytime to beat your saved fewest-moves record."
+    ],
+    "thumbnail": "/src/assets/images/game_cover_memory_1795734866266.jpg",
+    "iframe": "<iframe src=\"/games/memory.html\" title=\"Memory Match\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "/games/memory.html"
+  }
+]
