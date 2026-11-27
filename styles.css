@@ -1,23 +1,23 @@
 :root {
-  --bg-canvas: #090b10;
-  --bg-surface: #121620;
-  --bg-surface-elevated: #181e2c;
-  --bg-surface-hover: #1d2435;
-  --bg-input: #0c1018;
-  --bg-header: rgba(9, 11, 16, 0.84);
+  --bg-canvas: #07090e;
+  --bg-surface: #111520;
+  --bg-surface-elevated: #171d2c;
+  --bg-surface-hover: #1d2538;
+  --bg-input: #0b0e16;
+  --bg-header: rgba(7, 9, 14, 0.86);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
   --highlight-top: rgba(255, 255, 255, 0.06);
-  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.36);
-  --shadow-stage: 0 24px 64px rgba(0, 0, 0, 0.65);
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.38);
+  --shadow-stage: 0 24px 64px rgba(0, 0, 0, 0.7);
   --grid-dot: rgba(255, 255, 255, 0.045);
-  --glow-top: rgba(245, 158, 11, 0.11);
+  --glow-top: rgba(245, 158, 11, 0.12);
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --accent: #f59e0b;
   --accent-hover: #fbbf24;
-  --accent-ink: #090b10;
+  --accent-ink: #07090e;
   --playing-ring: #10b981;
   --danger: #f87171;
   --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
@@ -28,15 +28,15 @@
 }
 
 html.light-theme {
-  --bg-canvas: #f4f5f7;
+  --bg-canvas: #f3f4f7;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #ffffff;
   --bg-surface-hover: #f8fafc;
   --bg-input: #eef1f5;
-  --bg-header: rgba(244, 245, 247, 0.88);
+  --bg-header: rgba(243, 244, 247, 0.88);
   --border-subtle: rgba(15, 23, 42, 0.09);
   --border-strong: rgba(15, 23, 42, 0.18);
-  --highlight-top: rgba(255, 255, 255, 0.8);
+  --highlight-top: rgba(255, 255, 255, 0.85);
   --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
   --shadow-stage: 0 18px 48px rgba(15, 23, 42, 0.14);
   --grid-dot: rgba(15, 23, 42, 0.055);
@@ -84,6 +84,14 @@ body {
   background-size: 100% 100%, 24px 24px;
 }
 
+.cinema-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background-color: rgba(4, 6, 10, 0.86);
+  backdrop-filter: blur(4px);
+}
+
 [hidden] {
   display: none !important;
 }
@@ -103,16 +111,6 @@ body {
 .tabular-nums {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-code {
-  font-family: var(--font-mono);
-  font-size: 0.88em;
-  color: var(--text-primary);
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  padding: 2px 6px;
-  border-radius: 5px;
 }
 
 /* Header: strict 1-row, 3-zone contract */
@@ -149,7 +147,7 @@ code {
 .main-nav {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
 }
 
 .nav-link {
@@ -199,7 +197,7 @@ code {
   justify-content: center;
   gap: 8px;
   min-height: 40px;
-  padding: 8px 18px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 0.875rem;
@@ -256,15 +254,15 @@ code {
   min-height: 36px;
   padding: 0;
   border-radius: 8px;
-  background-color: rgba(9, 11, 16, 0.72);
+  background-color: rgba(7, 9, 14, 0.72);
   color: #f8fafc;
   border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(8px);
 }
 
 .icon-btn:hover {
-  background-color: rgba(245, 158, 11, 0.9);
-  color: #090b10;
+  background-color: rgba(245, 158, 11, 0.92);
+  color: #07090e;
   border-color: transparent;
 }
 
@@ -291,8 +289,7 @@ code {
 .brand-wordmark:focus-visible,
 .text-action-btn:focus-visible,
 input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
+select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -311,7 +308,7 @@ textarea:focus-visible {
 }
 
 .main-container.is-wide {
-  max-width: 1380px;
+  max-width: 1400px;
 }
 
 /* Active Iframe Game Stage */
@@ -324,6 +321,11 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.player-section.is-dimmed {
+  position: relative;
+  z-index: 40;
 }
 
 .player-bar {
@@ -360,12 +362,19 @@ textarea:focus-visible {
   gap: 8px;
 }
 
+.player-timer {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-right: 6px;
+}
+
 .iframe-stage {
   width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 460px;
-  max-height: 78vh;
-  background-color: #06080d;
+  min-height: 480px;
+  max-height: 80vh;
+  background-color: #05070b;
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   overflow: hidden;
@@ -377,7 +386,7 @@ textarea:focus-visible {
   height: 100%;
   border: 0;
   display: block;
-  background-color: #06080d;
+  background-color: #05070b;
 }
 
 .player-footer {
@@ -471,7 +480,7 @@ textarea:focus-visible {
 
 .featured-card {
   width: 100%;
-  min-height: 310px;
+  min-height: 320px;
   border-radius: 16px;
   overflow: hidden;
   background-color: var(--bg-surface);
@@ -484,7 +493,7 @@ textarea:focus-visible {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 310px;
+  min-height: 320px;
 }
 
 .featured-img {
@@ -499,9 +508,9 @@ textarea:focus-visible {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(9, 11, 16, 0.94) 0%,
-    rgba(9, 11, 16, 0.45) 52%,
-    rgba(9, 11, 16, 0.25) 100%
+    rgba(7, 9, 14, 0.94) 0%,
+    rgba(7, 9, 14, 0.45) 54%,
+    rgba(7, 9, 14, 0.28) 100%
   );
 }
 
@@ -629,6 +638,7 @@ textarea:focus-visible {
 
 .segmented-tabs {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 4px;
@@ -685,10 +695,9 @@ textarea:focus-visible {
   pointer-events: none;
 }
 
-.search-field input {
-  width: 220px;
+.search-field input,
+.sort-select {
   min-height: 40px;
-  padding: 8px 14px 8px 36px;
   background-color: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
@@ -697,8 +706,18 @@ textarea:focus-visible {
   font-size: 0.875rem;
 }
 
+.search-field input {
+  width: 210px;
+  padding: 8px 14px 8px 36px;
+}
+
 .search-field input::placeholder {
   color: var(--text-muted);
+}
+
+.sort-select {
+  padding: 8px 12px;
+  cursor: pointer;
 }
 
 /* Games Grid */
@@ -841,12 +860,12 @@ textarea:focus-visible {
   gap: 10px;
 }
 
-/* Modals & Pre-Game Briefing */
+/* Pre-Game Briefing Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background-color: rgba(6, 8, 13, 0.8);
+  background-color: rgba(4, 6, 10, 0.82);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -870,7 +889,7 @@ textarea:focus-visible {
 }
 
 .modal-panel-briefing {
-  max-width: 760px;
+  max-width: 780px;
 }
 
 .modal-header {
@@ -895,7 +914,7 @@ textarea:focus-visible {
 .modal-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -948,7 +967,7 @@ textarea:focus-visible {
 .spec-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .spec-item dt {
@@ -961,6 +980,29 @@ textarea:focus-visible {
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.difficulty-meter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.difficulty-bars {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.diff-bar {
+  width: 12px;
+  height: 5px;
+  border-radius: 2px;
+  background-color: var(--border-strong);
+}
+
+.diff-bar.is-filled {
+  background-color: var(--accent);
 }
 
 .briefing-tips-section {
@@ -995,6 +1037,157 @@ textarea:focus-visible {
   justify-content: flex-end;
   gap: 10px;
   padding-top: 4px;
+}
+
+/* Account & Sign In UI */
+.account-btn {
+  padding-left: 10px;
+  padding-right: 14px;
+}
+
+.account-btn-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.account-btn-initial {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-panel-account {
+  max-width: 480px;
+}
+
+.modal-panel-account > div {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.account-copy {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.account-auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.google-signin-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.google-signin-btn:disabled,
+.btn-secondary:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+.account-error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background-color: rgba(248, 113, 113, 0.1);
+  color: var(--danger);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.account-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+}
+
+.account-avatar-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.account-avatar-fallback {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.account-identity {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-email {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-created {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.account-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.btn-danger-outline:hover {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* Responsive */
@@ -1053,7 +1246,8 @@ textarea:focus-visible {
 
   .btn-primary,
   .btn-secondary,
-  .tab-btn {
+  .tab-btn,
+  .sort-select {
     min-height: 44px;
   }
 }

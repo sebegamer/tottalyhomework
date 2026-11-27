@@ -29,6 +29,7 @@
   </head>
   <body>
     <div class="ambient-backdrop" aria-hidden="true"></div>
+    <div id="cinema-backdrop" class="cinema-backdrop" hidden aria-hidden="true"></div>
 
     <header class="site-header">
       <div class="header-inner">
@@ -37,6 +38,9 @@
         <nav class="main-nav" aria-label="Game categories">
           <button type="button" class="nav-link is-active" data-nav-category="All">
             All Games
+          </button>
+          <button type="button" class="nav-link" data-nav-category="Sandbox">
+            Sandbox
           </button>
           <button type="button" class="nav-link" data-nav-category="Arcade">
             Arcade
@@ -50,8 +54,8 @@
         </nav>
 
         <div class="header-actions">
-          <button type="button" id="random-game-btn" class="btn-primary">
-            Random Game
+          <button type="button" id="auth-btn" class="btn-primary">
+            Sign In
           </button>
         </div>
       </div>
@@ -66,11 +70,15 @@
             <p id="player-subtitle" class="player-subtitle">Category · Controls</p>
           </div>
           <div class="player-controls">
+            <span id="player-timer" class="player-timer tabular-nums" aria-label="Session timer">00:00</span>
             <button type="button" id="player-info-btn" class="btn-secondary">
               Game Info
             </button>
             <button type="button" id="favorite-player-btn" class="btn-secondary">
               Save
+            </button>
+            <button type="button" id="dim-lights-btn" class="btn-secondary">
+              Dim Lights
             </button>
             <button type="button" id="theater-mode-btn" class="btn-secondary">
               Wide View
@@ -89,7 +97,7 @@
         <div id="iframe-stage" class="iframe-stage"></div>
         <div class="player-footer">
           <span id="player-controls-tip" class="player-controls-tip">Controls: Keyboard or Mouse</span>
-          <span class="player-esc-hint">Press Fullscreen for distraction-free play</span>
+          <span class="player-esc-hint">Use Fullscreen for maximum viewport</span>
         </div>
       </section>
 
@@ -99,7 +107,7 @@
           <div class="hero-copy">
             <h1 class="hero-headline">Instant browser games, zero clutter.</h1>
             <p id="hero-lead" class="hero-lead">
-              Asteroids Drift — Pilot your starship through deep space, split drifting asteroids, and survive escalating waves.
+              <strong>Minecraft:</strong> Explore, gather resources, craft tools, and build voxel worlds directly in your browser.
             </p>
           </div>
 
@@ -114,12 +122,12 @@
 
           <div class="hero-metrics" aria-label="Catalog summary">
             <div class="metric-item">
-              <span id="metric-total" class="metric-value tabular-nums">0</span>
+              <span id="metric-total" class="metric-value tabular-nums">7</span>
               <span class="metric-label">Games in catalog</span>
             </div>
             <div class="metric-divider" aria-hidden="true"></div>
             <div class="metric-item">
-              <span id="metric-categories" class="metric-value tabular-nums">3</span>
+              <span id="metric-categories" class="metric-value tabular-nums">4</span>
               <span class="metric-label">Genres</span>
             </div>
             <div class="metric-divider" aria-hidden="true"></div>
@@ -136,15 +144,14 @@
               <img
                 id="featured-img"
                 class="featured-img"
-                src="./assets/images/game_cover_asteroids_1795734865467.jpg"
+                src="./assets/images/game_cover_minecraft_1795737499846.jpg"
                 alt="Featured game cover"
                 referrerpolicy="no-referrer"
-                onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='./public/assets/images/game_cover_asteroids_1795734865467.jpg';}"
               />
               <div class="featured-scrim" aria-hidden="true"></div>
               <div class="featured-overlay">
                 <div class="featured-top-row">
-                  <span id="featured-meta" class="featured-meta">Featured · Action</span>
+                  <span id="featured-meta" class="featured-meta">Featured · Sandbox · 1 / 7</span>
                   <div class="featured-nav">
                     <button
                       type="button"
@@ -166,9 +173,9 @@
                 </div>
                 <div class="featured-bottom-row">
                   <div class="featured-text">
-                    <h2 id="featured-title" class="featured-title">Asteroids Drift</h2>
+                    <h2 id="featured-title" class="featured-title">Minecraft</h2>
                     <p id="featured-desc" class="featured-desc">
-                      Pilot your starship through deep space and clear escalating waves.
+                      Explore, gather resources, craft tools, and build voxel worlds directly in your browser.
                     </p>
                   </div>
                   <button type="button" id="featured-launch-btn" class="btn-primary">
@@ -191,10 +198,13 @@
       </section>
 
       <!-- Workspace Toolbar -->
-      <section id="catalog-toolbar" class="toolbar-section" aria-label="Filter and manage games">
+      <section id="catalog-toolbar" class="toolbar-section" aria-label="Filter and sort games">
         <div id="category-tabs" class="segmented-tabs" role="tablist" aria-label="Filter by category">
           <button type="button" class="tab-btn is-active" data-category="All" role="tab" aria-selected="true">
             All
+          </button>
+          <button type="button" class="tab-btn" data-category="Sandbox" role="tab" aria-selected="false">
+            Sandbox
           </button>
           <button type="button" class="tab-btn" data-category="Arcade" role="tab" aria-selected="false">
             Arcade
@@ -219,10 +229,17 @@
             <input
               id="search-input"
               type="search"
-              placeholder="Search games..."
+              placeholder="Search games... (/)"
               autocomplete="off"
             />
           </label>
+          <label class="sr-only" for="sort-select">Sort games</label>
+          <select id="sort-select" class="sort-select">
+            <option value="featured">Sort: Featured</option>
+            <option value="alpha">Sort: A to Z</option>
+            <option value="easy">Sort: Easiest First</option>
+            <option value="hard">Sort: Hardest First</option>
+          </select>
           <button type="button" id="theme-toggle-btn" class="btn-secondary">
             Light Theme
           </button>
@@ -249,7 +266,7 @@
       <div class="modal-panel modal-panel-briefing">
         <div class="modal-header">
           <div class="briefing-header-meta">
-            <span id="preview-kicker" class="briefing-kicker">Arcade · Easy · 1 Player</span>
+            <span id="preview-kicker" class="briefing-kicker">Sandbox · Medium · Single &amp; Multiplayer</span>
             <h2 id="preview-title" class="modal-title briefing-title">Game Title</h2>
           </div>
           <button type="button" id="preview-close-btn" class="btn-secondary">
@@ -267,7 +284,14 @@
             <dl class="briefing-specs">
               <div class="spec-item">
                 <dt>Difficulty</dt>
-                <dd id="preview-difficulty">Medium</dd>
+                <dd class="difficulty-meter-row">
+                  <span id="preview-difficulty">Medium</span>
+                  <span id="preview-difficulty-bars" class="difficulty-bars" aria-hidden="true">
+                    <span class="diff-bar"></span>
+                    <span class="diff-bar"></span>
+                    <span class="diff-bar"></span>
+                  </span>
+                </dd>
               </div>
               <div class="spec-item">
                 <dt>Session Length</dt>
@@ -293,6 +317,85 @@
         <div class="modal-actions briefing-actions">
           <button type="button" id="preview-save-btn" class="btn-secondary">Save</button>
           <button type="button" id="preview-start-btn" class="btn-primary btn-lg">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Sign-In & Profile Modal -->
+    <div id="account-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+      <div class="modal-panel modal-panel-account">
+        <div id="account-signed-out">
+          <div class="modal-header">
+            <div class="briefing-header-meta">
+              <span class="briefing-kicker">Player Account</span>
+              <h2 id="account-modal-title" class="modal-title">Sign In or Create Account</h2>
+            </div>
+            <button type="button" id="account-close-btn" class="btn-secondary">
+              Close
+            </button>
+          </div>
+
+          <p class="account-copy">
+            Sign in with Google to create your Totally Homework account. Your saved games, recently played titles, and play counts are saved to your profile across devices.
+          </p>
+
+          <p id="account-error" class="account-error" hidden role="alert"></p>
+
+          <div class="account-auth-actions">
+            <button type="button" id="google-signin-btn" class="btn-primary btn-lg google-signin-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81Z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="account-signed-in" hidden>
+          <div class="modal-header">
+            <div class="briefing-header-meta">
+              <span class="briefing-kicker">Your Account</span>
+              <h2 id="account-signedin-title" class="modal-title">Account Profile</h2>
+            </div>
+            <button type="button" id="account-signedin-close-btn" class="btn-secondary">
+              Close
+            </button>
+          </div>
+
+          <div class="account-profile-row">
+            <div class="account-avatar-wrap">
+              <img id="account-avatar-img" class="account-avatar" src="" alt="" referrerpolicy="no-referrer" hidden />
+              <span id="account-avatar-fallback" class="account-avatar-fallback" aria-hidden="true">P</span>
+            </div>
+            <div class="account-identity">
+              <div id="account-name" class="account-name">Player</div>
+              <div id="account-email" class="account-email">player@example.com</div>
+              <div id="account-created" class="account-created">Account active</div>
+            </div>
+          </div>
+
+          <dl class="briefing-specs account-stats">
+            <div class="spec-item">
+              <dt>Saved Favorites</dt>
+              <dd id="account-stat-saved" class="tabular-nums">0</dd>
+            </div>
+            <div class="spec-item">
+              <dt>Total Launches</dt>
+              <dd id="account-stat-plays" class="tabular-nums">0</dd>
+            </div>
+            <div class="spec-item">
+              <dt>Cloud Sync</dt>
+              <dd id="account-sync-status">Active</dd>
+            </div>
+          </dl>
+
+          <p id="account-sync-error" class="account-error" hidden role="alert"></p>
+
+          <div class="modal-actions">
+            <button type="button" id="signout-btn" class="btn-secondary btn-danger-outline">
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
     </div>

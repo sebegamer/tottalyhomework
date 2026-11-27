@@ -1,27 +1,74 @@
+import {
+  observeAuth,
+  signInWithGoogle,
+  signOutAccount,
+  ensureUserAccount,
+  subscribeToUserAccount,
+  syncUserArcadeData,
+  getFriendlyFirebaseError,
+  sanitizeIdArray,
+  sanitizePlayCounts,
+} from './firebase.js';
+
 const FAVORITES_KEY = 'deskplay_favorites_v1';
 const RECENT_GAMES_KEY = 'deskplay_recent_v1';
+const PLAY_COUNTS_KEY = 'deskplay_play_counts_v1';
 const THEME_KEY = 'deskplay_theme_v1';
+
+const DIFFICULTY_RANK = {
+  Easy: 1,
+  Medium: 2,
+  Hard: 3,
+};
 
 const state = {
   catalogGames: [],
   favorites: new Set(),
   recentIds: [],
+  playCounts: {},
+  user: null,
+  accountDoc: null,
+  unsubscribeAccount: null,
+  authPending: false,
   activeCategory: 'All',
+  sortBy: 'featured',
   searchQuery: '',
   currentGameId: null,
   previewGameId: null,
   featuredIndex: 0,
   wideTheater: false,
+  dimLights: false,
   lightTheme: false,
+  sessionSeconds: 0,
+  sessionTimerId: null,
 };
 
 const elements = {
   mainContainer: document.getElementById('main-container'),
+  cinemaBackdrop: document.getElementById('cinema-backdrop'),
   brandLink: document.getElementById('brand-link'),
   navButtons: Array.from(document.querySelectorAll('[data-nav-category]')),
   tabButtons: Array.from(document.querySelectorAll('[data-category]')),
-  randomGameBtn: document.getElementById('random-game-btn'),
+  authBtn: document.getElementById('auth-btn'),
+  accountModal: document.getElementById('account-modal'),
+  accountSignedOut: document.getElementById('account-signed-out'),
+  accountSignedIn: document.getElementById('account-signed-in'),
+  accountCloseBtn: document.getElementById('account-close-btn'),
+  accountSignedInCloseBtn: document.getElementById('account-signedin-close-btn'),
+  googleSignInBtn: document.getElementById('google-signin-btn'),
+  signOutBtn: document.getElementById('signout-btn'),
+  accountError: document.getElementById('account-error'),
+  accountSyncError: document.getElementById('account-sync-error'),
+  accountAvatarImg: document.getElementById('account-avatar-img'),
+  accountAvatarFallback: document.getElementById('account-avatar-fallback'),
+  accountName: document.getElementById('account-name'),
+  accountEmail: document.getElementById('account-email'),
+  accountCreated: document.getElementById('account-created'),
+  accountStatSaved: document.getElementById('account-stat-saved'),
+  accountStatPlays: document.getElementById('account-stat-plays'),
+  accountSyncStatus: document.getElementById('account-sync-status'),
   searchInput: document.getElementById('search-input'),
+  sortSelect: document.getElementById('sort-select'),
   gamesGrid: document.getElementById('games-grid'),
   gamesStatus: document.getElementById('games-status'),
   metricTotal: document.getElementById('metric-total'),
@@ -42,10 +89,12 @@ const elements = {
   playerSection: document.getElementById('player-section'),
   playerTitle: document.getElementById('player-title'),
   playerSubtitle: document.getElementById('player-subtitle'),
+  playerTimer: document.getElementById('player-timer'),
   playerControlsTip: document.getElementById('player-controls-tip'),
   iframeStage: document.getElementById('iframe-stage'),
   playerInfoBtn: document.getElementById('player-info-btn'),
   favoritePlayerBtn: document.getElementById('favorite-player-btn'),
+  dimLightsBtn: document.getElementById('dim-lights-btn'),
   theaterModeBtn: document.getElementById('theater-mode-btn'),
   reloadGameBtn: document.getElementById('reload-game-btn'),
   fullscreenGameBtn: document.getElementById('fullscreen-game-btn'),
@@ -57,6 +106,7 @@ const elements = {
   previewImg: document.getElementById('preview-img'),
   previewOverview: document.getElementById('preview-overview'),
   previewDifficulty: document.getElementById('preview-difficulty'),
+  previewDifficultyBars: document.getElementById('preview-difficulty-bars'),
   previewTime: document.getElementById('preview-time'),
   previewPlayers: document.getElementById('preview-players'),
   previewControls: document.getElementById('preview-controls'),
@@ -87,7 +137,7 @@ function isSafeIframeUrl(rawUrl) {
 function parseIframeConfig(game) {
   let src = typeof game.iframeSrc === 'string' ? game.iframeSrc.trim() : '';
   let title = game.title || 'Unblocked Game';
-  let allow = 'fullscreen; autoplay; gamepad';
+  let allow = 'fullscreen; autoplay; gamepad; pointer-lock';
 
   if (typeof game.iframe === 'string' && game.iframe.trim().startsWith('<')) {
     const parser = new DOMParser();
@@ -147,10 +197,19 @@ function loadLocalStorage() {
   try {
     const savedRecent = JSON.parse(localStorage.getItem(RECENT_GAMES_KEY) || '[]');
     if (Array.isArray(savedRecent)) {
-      state.recentIds = savedRecent.filter((id) => typeof id === 'string').slice(0, 5);
+      state.recentIds = savedRecent.filter((id) => typeof id === 'string').slice(0, 6);
     }
   } catch {
     state.recentIds = [];
+  }
+
+  try {
+    const savedCounts = JSON.parse(localStorage.getItem(PLAY_COUNTS_KEY) || '{}');
+    if (savedCounts && typeof savedCounts === 'object') {
+      state.playCounts = savedCounts;
+    }
+  } catch {
+    state.playCounts = {};
   }
 
   state.lightTheme = localStorage.getItem(THEME_KEY) === 'light';
@@ -170,14 +229,72 @@ function toggleTheme() {
   applyTheme();
 }
 
-function saveFavorites() {
+function persistLocalArcadeState() {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(state.favorites)));
+  localStorage.setItem(RECENT_GAMES_KEY, JSON.stringify(state.recentIds));
+  localStorage.setItem(PLAY_COUNTS_KEY, JSON.stringify(state.playCounts));
 }
 
-function recordRecentGame(gameId) {
-  state.recentIds = [gameId, ...state.recentIds.filter((id) => id !== gameId)].slice(0, 5);
-  localStorage.setItem(RECENT_GAMES_KEY, JSON.stringify(state.recentIds));
+async function persistArcadeState() {
+  persistLocalArcadeState();
+  renderAccountModalContent();
+  if (!state.user) return;
+  try {
+    await syncUserArcadeData(state.user.uid, {
+      favorites: Array.from(state.favorites),
+      recentIds: state.recentIds,
+      playCounts: state.playCounts,
+    });
+    if (elements.accountSyncStatus) {
+      elements.accountSyncStatus.textContent = 'Synced';
+    }
+    if (elements.accountSyncError) {
+      elements.accountSyncError.hidden = true;
+    }
+  } catch (err) {
+    if (elements.accountSyncStatus) {
+      elements.accountSyncStatus.textContent = 'Local only';
+    }
+    if (elements.accountSyncError) {
+      elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
+      elements.accountSyncError.hidden = false;
+    }
+  }
+}
+
+function saveFavorites() {
+  void persistArcadeState();
+}
+
+function recordGameLaunch(gameId) {
+  state.recentIds = [gameId, ...state.recentIds.filter((id) => id !== gameId)].slice(0, 6);
+
+  const nextCount = Number(state.playCounts[gameId] || 0) + 1;
+  state.playCounts[gameId] = nextCount;
+
   renderRecentStrip();
+  void persistArcadeState();
+}
+
+function formatDuration(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function startSessionTimer() {
+  clearInterval(state.sessionTimerId);
+  state.sessionSeconds = 0;
+  elements.playerTimer.textContent = '00:00';
+  state.sessionTimerId = setInterval(() => {
+    state.sessionSeconds += 1;
+    elements.playerTimer.textContent = formatDuration(state.sessionSeconds);
+  }, 1000);
+}
+
+function stopSessionTimer() {
+  clearInterval(state.sessionTimerId);
+  state.sessionTimerId = null;
 }
 
 function updateMetrics() {
@@ -187,7 +304,7 @@ function updateMetrics() {
     elements.metricTotal.textContent = String(all.length);
   }
   if (elements.metricCategories) {
-    elements.metricCategories.textContent = String(categories.size || 3);
+    elements.metricCategories.textContent = String(categories.size || 4);
   }
   if (elements.metricSaved) {
     elements.metricSaved.textContent = String(state.favorites.size);
@@ -203,13 +320,13 @@ function renderFeaturedSpotlight() {
 
   elements.featuredTitle.textContent = game.title;
   elements.featuredDesc.textContent = game.description || 'Play directly inside the embedded iframe player.';
-  elements.featuredMeta.textContent = `Featured · ${game.category} · ${game.difficulty || 'Standard'}`;
+  elements.featuredMeta.textContent = `Featured · ${game.category} · ${idx + 1} / ${all.length}`;
 
   if (elements.heroLead) {
     const leadTitle = document.createElement('strong');
     leadTitle.textContent = `${game.title}: `;
     const leadDesc = document.createTextNode(
-      `${game.description || 'Play directly in your browser.'} (${game.controls || 'Keyboard or Mouse'})`
+      `${game.description || 'Play directly in your browser.'} (${game.difficulty || 'Standard'} · ${game.controls || 'Keyboard or Mouse'})`
     );
     elements.heroLead.replaceChildren(leadTitle, leadDesc);
   }
@@ -253,6 +370,12 @@ function renderRecentStrip() {
       img.src = game.thumbnail;
       img.alt = '';
       img.referrerPolicy = 'no-referrer';
+      img.addEventListener('error', () => {
+        if (!img.dataset.fb && game.thumbnail.startsWith('./assets/')) {
+          img.dataset.fb = '1';
+          img.src = `./public/${game.thumbnail.slice(2)}`;
+        }
+      });
       btn.appendChild(img);
     }
 
@@ -311,6 +434,14 @@ function syncPreviewFavoriteButton() {
   elements.previewSaveBtn.classList.toggle('is-saved', saved);
 }
 
+function renderDifficultyBars(difficulty) {
+  const rank = DIFFICULTY_RANK[difficulty] || 2;
+  const bars = Array.from(elements.previewDifficultyBars.children);
+  bars.forEach((bar, idx) => {
+    bar.classList.toggle('is-filled', idx < rank);
+  });
+}
+
 function openGamePreview(gameId) {
   const game = getAllGames().find((item) => item.id === gameId);
   if (!game) return;
@@ -325,6 +456,7 @@ function openGamePreview(gameId) {
   elements.previewOverview.textContent =
     game.overview || game.description || 'Play directly inside the browser.';
   elements.previewDifficulty.textContent = difficulty;
+  renderDifficultyBars(difficulty);
   elements.previewTime.textContent = duration;
   elements.previewPlayers.textContent = players;
   elements.previewControls.textContent = game.controls || 'Keyboard or Mouse';
@@ -371,6 +503,14 @@ function closeGamePreview() {
   elements.previewModal.hidden = true;
 }
 
+function setDimLights(enabled) {
+  state.dimLights = enabled;
+  elements.cinemaBackdrop.hidden = !enabled;
+  elements.playerSection.classList.toggle('is-dimmed', enabled);
+  elements.dimLightsBtn.classList.toggle('is-active', enabled);
+  elements.dimLightsBtn.textContent = enabled ? 'Lights On' : 'Dim Lights';
+}
+
 function launchGame(gameId) {
   const game = getAllGames().find((item) => item.id === gameId);
   if (!game) return;
@@ -382,13 +522,14 @@ function launchGame(gameId) {
 
   state.currentGameId = game.id;
   elements.playerTitle.textContent = game.title;
-  elements.playerSubtitle.textContent = `${game.category} · ${game.difficulty || 'Standard'} · ${game.controls || 'Keyboard or Mouse'}`;
+  elements.playerSubtitle.textContent = `${game.category} · ${game.difficulty || 'Standard'} · ${game.players || '1 Player'}`;
   elements.playerControlsTip.textContent = `Controls: ${game.controls || 'Keyboard or Mouse'}`;
 
   elements.iframeStage.replaceChildren(iframeEl);
   elements.playerSection.hidden = false;
   syncPlayerFavoriteButton();
-  recordRecentGame(game.id);
+  recordGameLaunch(game.id);
+  startSessionTimer();
   renderCatalog();
 
   elements.playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -396,6 +537,8 @@ function launchGame(gameId) {
 
 function closePlayer() {
   state.currentGameId = null;
+  stopSessionTimer();
+  setDimLights(false);
   elements.iframeStage.replaceChildren();
   elements.playerSection.hidden = true;
   renderCatalog();
@@ -408,6 +551,7 @@ function reloadCurrentGame() {
   const iframeEl = createSafeIframeElement(game);
   if (!iframeEl) return;
   elements.iframeStage.replaceChildren(iframeEl);
+  startSessionTimer();
 }
 
 function toggleWideTheater() {
@@ -428,7 +572,7 @@ function toggleFullscreen() {
 
 function getFilteredGames() {
   const query = state.searchQuery.trim().toLowerCase();
-  return getAllGames().filter((game) => {
+  const filtered = getAllGames().filter((game) => {
     const matchesCategory =
       state.activeCategory === 'All' ||
       (state.activeCategory === 'Favorites'
@@ -441,6 +585,21 @@ function getFilteredGames() {
     const haystack = `${game.title} ${game.category} ${game.difficulty || ''} ${game.description || ''}`.toLowerCase();
     return haystack.includes(query);
   });
+
+  if (state.sortBy === 'alpha') {
+    return [...filtered].sort((a, b) => a.title.localeCompare(b.title));
+  }
+  if (state.sortBy === 'easy') {
+    return [...filtered].sort(
+      (a, b) => (DIFFICULTY_RANK[a.difficulty] || 2) - (DIFFICULTY_RANK[b.difficulty] || 2)
+    );
+  }
+  if (state.sortBy === 'hard') {
+    return [...filtered].sort(
+      (a, b) => (DIFFICULTY_RANK[b.difficulty] || 2) - (DIFFICULTY_RANK[a.difficulty] || 2)
+    );
+  }
+  return filtered;
 }
 
 function buildThumbnailSlot(game) {
@@ -510,7 +669,9 @@ function renderCatalog() {
 
     const meta = document.createElement('div');
     meta.className = 'card-meta';
-    meta.textContent = `${game.category} · ${game.difficulty || 'Standard'} · ${game.estimatedTime || '5 min'}`;
+    const plays = Number(state.playCounts[game.id] || 0);
+    const playText = plays > 0 ? ` · Played ${plays}×` : '';
+    meta.textContent = `${game.category} · ${game.difficulty || 'Standard'} · ${game.estimatedTime || '5 min'}${playText}`;
 
     const title = document.createElement('h3');
     title.className = 'card-title';
@@ -579,8 +740,7 @@ async function loadGamesCatalog() {
             : rawSrc;
         return { ...item, iframeSrc: adjustedSrc };
       });
-    const asteroidsIdx = state.catalogGames.findIndex((g) => g.id === 'asteroids-drift');
-    state.featuredIndex = asteroidsIdx >= 0 ? asteroidsIdx : 0;
+    state.featuredIndex = 0;
     updateMetrics();
     renderFeaturedSpotlight();
     renderRecentStrip();
@@ -589,6 +749,211 @@ async function loadGamesCatalog() {
     elements.gamesStatus.hidden = false;
     elements.gamesStatus.textContent = `Could not load games (${err.message}).`;
   }
+}
+
+function getTotalLaunchCount() {
+  return Object.values(state.playCounts).reduce((sum, n) => sum + (Number(n) || 0), 0);
+}
+
+function formatCreatedDate(createdAt) {
+  if (!createdAt) return 'Signed in with Google';
+  try {
+    const date = typeof createdAt.toDate === 'function' ? createdAt.toDate() : new Date(createdAt);
+    if (Number.isNaN(date.getTime())) return 'Account active';
+    return `Member since ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  } catch {
+    return 'Account active';
+  }
+}
+
+function renderAuthButton() {
+  if (!elements.authBtn) return;
+  if (!state.user) {
+    elements.authBtn.className = 'btn-primary';
+    elements.authBtn.textContent = 'Sign In';
+    elements.authBtn.setAttribute('aria-label', 'Sign in or create account');
+    return;
+  }
+
+  const displayName =
+    state.accountDoc?.displayName ||
+    state.user.displayName ||
+    state.user.email?.split('@')[0] ||
+    'Account';
+  const shortName = displayName.split(' ')[0].slice(0, 16) || 'Account';
+  const photoUrl = state.accountDoc?.photoURL || state.user.photoURL || '';
+  const initial = displayName.trim().charAt(0).toUpperCase() || 'A';
+
+  elements.authBtn.className = 'btn-secondary account-btn';
+  elements.authBtn.setAttribute('aria-label', `Account settings for ${displayName}`);
+
+  const fragment = document.createDocumentFragment();
+  if (photoUrl && isSafeIframeUrl(photoUrl)) {
+    const img = document.createElement('img');
+    img.className = 'account-btn-avatar';
+    img.src = photoUrl;
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.addEventListener('error', () => {
+      const badge = document.createElement('span');
+      badge.className = 'account-btn-initial';
+      badge.textContent = initial;
+      img.replaceWith(badge);
+    });
+    fragment.appendChild(img);
+  } else {
+    const badge = document.createElement('span');
+    badge.className = 'account-btn-initial';
+    badge.textContent = initial;
+    fragment.appendChild(badge);
+  }
+
+  const label = document.createElement('span');
+  label.textContent = shortName;
+  fragment.appendChild(label);
+  elements.authBtn.replaceChildren(fragment);
+}
+
+function renderAccountModalContent() {
+  if (!elements.accountModal) return;
+
+  if (!state.user) {
+    elements.accountSignedOut.hidden = false;
+    elements.accountSignedIn.hidden = true;
+    return;
+  }
+
+  elements.accountSignedOut.hidden = true;
+  elements.accountSignedIn.hidden = false;
+
+  const displayName =
+    state.accountDoc?.displayName ||
+    state.user.displayName ||
+    state.user.email?.split('@')[0] ||
+    'Player';
+  const email = state.accountDoc?.email || state.user.email || '';
+  const photoUrl = state.accountDoc?.photoURL || state.user.photoURL || '';
+  const initial = displayName.trim().charAt(0).toUpperCase() || 'P';
+
+  elements.accountName.textContent = displayName;
+  elements.accountEmail.textContent = email;
+  elements.accountCreated.textContent = formatCreatedDate(state.accountDoc?.createdAt);
+  elements.accountStatSaved.textContent = String(state.favorites.size);
+  elements.accountStatPlays.textContent = String(getTotalLaunchCount());
+
+  elements.accountAvatarFallback.textContent = initial;
+  if (photoUrl && isSafeIframeUrl(photoUrl)) {
+    elements.accountAvatarImg.src = photoUrl;
+    elements.accountAvatarImg.alt = `${displayName} profile photo`;
+    elements.accountAvatarImg.hidden = false;
+    elements.accountAvatarFallback.hidden = true;
+    elements.accountAvatarImg.onerror = () => {
+      elements.accountAvatarImg.hidden = true;
+      elements.accountAvatarFallback.hidden = false;
+    };
+  } else {
+    elements.accountAvatarImg.hidden = true;
+    elements.accountAvatarFallback.hidden = false;
+  }
+}
+
+function openAccountModal() {
+  if (elements.accountError) {
+    elements.accountError.hidden = true;
+    elements.accountError.textContent = '';
+  }
+  renderAccountModalContent();
+  elements.accountModal.hidden = false;
+  if (state.user) {
+    elements.accountSignedInCloseBtn?.focus();
+  } else {
+    elements.googleSignInBtn?.focus();
+  }
+}
+
+function closeAccountModal() {
+  elements.accountModal.hidden = true;
+}
+
+function applyCloudAccountData(account) {
+  if (!account) return;
+  state.accountDoc = account;
+  state.favorites = new Set(sanitizeIdArray(account.favorites || [], 50));
+  state.recentIds = sanitizeIdArray(account.recentIds || [], 6);
+  state.playCounts = sanitizePlayCounts(account.playCounts || {});
+  persistLocalArcadeState();
+  updateMetrics();
+  renderRecentStrip();
+  syncPlayerFavoriteButton();
+  syncPreviewFavoriteButton();
+  renderCatalog();
+  renderAuthButton();
+  renderAccountModalContent();
+}
+
+function initFirebaseAuth() {
+  observeAuth(async (user) => {
+    if (state.unsubscribeAccount) {
+      state.unsubscribeAccount();
+      state.unsubscribeAccount = null;
+    }
+
+    state.user = user || null;
+    if (!user) {
+      state.accountDoc = null;
+      renderAuthButton();
+      renderAccountModalContent();
+      return;
+    }
+
+    renderAuthButton();
+    if (elements.accountSyncStatus) {
+      elements.accountSyncStatus.textContent = 'Syncing...';
+    }
+
+    try {
+      const result = await ensureUserAccount(user, {
+        favorites: Array.from(state.favorites),
+        recentIds: state.recentIds,
+        playCounts: state.playCounts,
+      });
+      applyCloudAccountData(result.account);
+      if (elements.accountSyncStatus) {
+        elements.accountSyncStatus.textContent = 'Active';
+      }
+      if (elements.accountSyncError) {
+        elements.accountSyncError.hidden = true;
+      }
+
+      state.unsubscribeAccount = subscribeToUserAccount(
+        user.uid,
+        (docData) => {
+          applyCloudAccountData(docData);
+        },
+        (err) => {
+          if (elements.accountSyncStatus) {
+            elements.accountSyncStatus.textContent = 'Error';
+          }
+          if (elements.accountSyncError) {
+            elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
+            elements.accountSyncError.hidden = false;
+          }
+        }
+      );
+    } catch (err) {
+      if (elements.accountSyncStatus) {
+        elements.accountSyncStatus.textContent = 'Local only';
+      }
+      if (elements.accountSyncError) {
+        elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
+        elements.accountSyncError.hidden = false;
+      }
+      if (elements.accountError) {
+        elements.accountError.textContent = getFriendlyFirebaseError(err);
+        elements.accountError.hidden = false;
+      }
+    }
+  });
 }
 
 function wireEvents() {
@@ -618,13 +983,58 @@ function wireEvents() {
     renderCatalog();
   });
 
-  elements.randomGameBtn.addEventListener('click', () => {
-    const all = getAllGames();
-    if (all.length === 0) return;
-    const candidates =
-      all.length > 1 ? all.filter((g) => g.id !== state.currentGameId) : all;
-    const pick = candidates[Math.floor(Math.random() * candidates.length)];
-    openGamePreview(pick.id);
+  elements.sortSelect.addEventListener('change', (e) => {
+    state.sortBy = e.target.value;
+    renderCatalog();
+  });
+
+  elements.authBtn.addEventListener('click', openAccountModal);
+  elements.accountCloseBtn.addEventListener('click', closeAccountModal);
+  elements.accountSignedInCloseBtn.addEventListener('click', closeAccountModal);
+  elements.accountModal.addEventListener('click', (e) => {
+    if (e.target === elements.accountModal) {
+      closeAccountModal();
+    }
+  });
+
+  elements.googleSignInBtn.addEventListener('click', async () => {
+    if (state.authPending) return;
+    state.authPending = true;
+    elements.googleSignInBtn.disabled = true;
+    if (elements.accountError) {
+      elements.accountError.hidden = true;
+      elements.accountError.textContent = '';
+    }
+    try {
+      await signInWithGoogle();
+      closeAccountModal();
+    } catch (err) {
+      if (elements.accountError) {
+        elements.accountError.textContent = getFriendlyFirebaseError(err);
+        elements.accountError.hidden = false;
+      }
+    } finally {
+      state.authPending = false;
+      elements.googleSignInBtn.disabled = false;
+    }
+  });
+
+  elements.signOutBtn.addEventListener('click', async () => {
+    if (state.authPending) return;
+    state.authPending = true;
+    elements.signOutBtn.disabled = true;
+    try {
+      await signOutAccount();
+      closeAccountModal();
+    } catch (err) {
+      if (elements.accountSyncError) {
+        elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
+        elements.accountSyncError.hidden = false;
+      }
+    } finally {
+      state.authPending = false;
+      elements.signOutBtn.disabled = false;
+    }
   });
 
   elements.featuredPrevBtn.addEventListener('click', () => {
@@ -648,8 +1058,8 @@ function wireEvents() {
 
   elements.clearRecentBtn.addEventListener('click', () => {
     state.recentIds = [];
-    localStorage.removeItem(RECENT_GAMES_KEY);
     renderRecentStrip();
+    void persistArcadeState();
   });
 
   elements.playerInfoBtn.addEventListener('click', () => {
@@ -664,6 +1074,8 @@ function wireEvents() {
     }
   });
 
+  elements.dimLightsBtn.addEventListener('click', () => setDimLights(!state.dimLights));
+  elements.cinemaBackdrop.addEventListener('click', () => setDimLights(false));
   elements.theaterModeBtn.addEventListener('click', toggleWideTheater);
   elements.reloadGameBtn.addEventListener('click', reloadCurrentGame);
   elements.fullscreenGameBtn.addEventListener('click', toggleFullscreen);
@@ -686,14 +1098,41 @@ function wireEvents() {
       closeGamePreview();
     }
   });
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !elements.previewModal.hidden) {
-      closeGamePreview();
+    const activeTag = document.activeElement?.tagName;
+    const isTyping = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+    if (e.key === 'Escape') {
+      if (!elements.accountModal.hidden) {
+        closeAccountModal();
+        return;
+      }
+      if (!elements.previewModal.hidden) {
+        closeGamePreview();
+        return;
+      }
+      if (state.dimLights) {
+        setDimLights(false);
+      }
+      return;
+    }
+
+    if (
+      e.key === '/' &&
+      !isTyping &&
+      elements.previewModal.hidden &&
+      elements.accountModal.hidden
+    ) {
+      e.preventDefault();
+      elements.searchInput.focus();
     }
   });
 }
 
 loadLocalStorage();
 wireEvents();
+renderAuthButton();
 updateMetrics();
 loadGamesCatalog();
+initFirebaseAuth();

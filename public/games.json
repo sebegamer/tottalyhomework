@@ -1,5 +1,24 @@
 [
   {
+    "id": "minecraft-classic",
+    "title": "Minecraft",
+    "category": "Sandbox",
+    "difficulty": "Medium",
+    "estimatedTime": "15–60 min",
+    "players": "Single & Multiplayer",
+    "description": "Explore, gather resources, craft tools, and build voxel worlds directly in your browser.",
+    "overview": "Play Minecraft 1.5.2 directly in your browser with full Survival and Creative modes, infinite procedural terrain, crafting recipes, and both local singleplayer worlds and multiplayer servers.",
+    "controls": "WASD move · Space jump · Left click mine · Right click place · E inventory",
+    "tips": [
+      "Click inside the game window after loading a world to capture your mouse cursor for smooth 3D look.",
+      "Press E to open your inventory and craft a wooden pickaxe before nightfall.",
+      "Use Fullscreen mode in the player bar above for the sharpest viewport and mouse lock."
+    ],
+    "thumbnail": "./assets/images/game_cover_minecraft_1795737499846.jpg",
+    "iframe": "<iframe src=\"https://d1tm91r4ytbt54.cloudfront.net/2779cbcb-a02f-48a3-9e2e-95a8d123d165/1685483461665/web/index.html\" title=\"Minecraft\" allow=\"fullscreen; autoplay; gamepad; pointer-lock\" loading=\"lazy\" allowfullscreen></iframe>",
+    "iframeSrc": "https://d1tm91r4ytbt54.cloudfront.net/2779cbcb-a02f-48a3-9e2e-95a8d123d165/1685483461665/web/index.html"
+  },
+  {
     "id": "grid-snake",
     "title": "Grid Snake",
     "category": "Arcade",
