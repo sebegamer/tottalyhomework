@@ -1,25 +1,184 @@
-import {
-  observeAuth,
-  signInWithGoogle,
-  signOutAccount,
-  ensureUserAccount,
-  subscribeToUserAccount,
-  syncUserArcadeData,
-  getFriendlyFirebaseError,
-  sanitizeIdArray,
-  sanitizePlayCounts,
-} from './firebase.js';
-
 const FAVORITES_KEY = 'deskplay_favorites_v1';
 const RECENT_GAMES_KEY = 'deskplay_recent_v1';
 const PLAY_COUNTS_KEY = 'deskplay_play_counts_v1';
 const THEME_KEY = 'deskplay_theme_v1';
+const VALID_ID_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+let firebaseModulePromise = null;
+
+function getFirebaseModule() {
+  if (!firebaseModulePromise) {
+    firebaseModulePromise = import('./firebase.js').catch((err) => {
+      firebaseModulePromise = null;
+      throw err;
+    });
+  }
+  return firebaseModulePromise;
+}
+
+function sanitizeIdArray(items, maxLen) {
+  if (!Array.isArray(items)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const item of items) {
+    if (typeof item !== 'string') continue;
+    const trimmed = item.trim();
+    if (trimmed.length < 1 || trimmed.length > 64 || !VALID_ID_REGEX.test(trimmed)) {
+      continue;
+    }
+    if (!seen.has(trimmed)) {
+      seen.add(trimmed);
+      out.push(trimmed);
+      if (out.length >= maxLen) break;
+    }
+  }
+  return out;
+}
+
+function sanitizePlayCounts(counts) {
+  if (!counts || typeof counts !== 'object' || Array.isArray(counts)) return {};
+  const out = {};
+  let entries = 0;
+  for (const [key, val] of Object.entries(counts)) {
+    if (entries >= 50) break;
+    if (typeof key !== 'string' || key.length < 1 || key.length > 64 || !VALID_ID_REGEX.test(key)) {
+      continue;
+    }
+    const num = Math.max(0, Math.floor(Number(val) || 0));
+    if (num > 0) {
+      out[key] = num;
+      entries += 1;
+    }
+  }
+  return out;
+}
+
+function safeStorageGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage errors in restricted environments
+  }
+}
 
 const DIFFICULTY_RANK = {
   Easy: 1,
   Medium: 2,
   Hard: 3,
 };
+
+const FALLBACK_GAMES = [
+  {
+    id: 'minecraft-classic',
+    title: 'Minecraft',
+    category: 'Sandbox',
+    difficulty: 'Medium',
+    estimatedTime: '15–60 min',
+    players: 'Single & Multiplayer',
+    description: 'Explore, gather resources, craft tools, and build voxel worlds directly in your browser.',
+    overview: 'Play Minecraft 1.5.2 directly in your browser with full Survival and Creative modes, infinite procedural terrain, crafting recipes, and both local singleplayer worlds and multiplayer servers.',
+    controls: 'WASD move · Space jump · Left click mine · Right click place · E inventory',
+    tips: [
+      'Click inside the game window after loading a world to capture your mouse cursor for smooth 3D look.',
+      'Press E to open your inventory and craft a wooden pickaxe before nightfall.',
+      'Use Fullscreen mode in the player bar above for the sharpest viewport and mouse lock.',
+    ],
+    thumbnail: './assets/images/game_cover_minecraft_1795737499846.jpg',
+    iframeSrc: 'https://d1tm91r4ytbt54.cloudfront.net/2779cbcb-a02f-48a3-9e2e-95a8d123d165/1685483461665/web/index.html',
+  },
+  {
+    id: 'grid-snake',
+    title: 'Grid Snake',
+    category: 'Arcade',
+    difficulty: 'Easy',
+    estimatedTime: '3–8 min',
+    players: '1 Player',
+    description: 'Steer the snake across the grid, collect golden apples, and avoid walls or your own tail.',
+    overview: 'Guide your snake through a 20x20 arena, eating golden apples to extend your tail and build a high score.',
+    controls: 'Arrow keys or WASD (P to pause)',
+    tips: ['Plan turns two tiles ahead once your snake grows past 15 segments.'],
+    thumbnail: './assets/images/game_cover_snake_1795734863750.jpg',
+    iframeSrc: './games/snake.html',
+  },
+  {
+    id: 'brick-breaker',
+    title: 'Brick Breaker',
+    category: 'Arcade',
+    difficulty: 'Medium',
+    estimatedTime: '5–12 min',
+    players: '1 Player',
+    description: 'Deflect the ball off your paddle to clear layered brick formations across progressive rounds.',
+    overview: 'Bounce the steel ball off your paddle to shatter five layered rows of colored bricks across progressive rounds.',
+    controls: 'Mouse, Touch drag, or Left/Right arrows',
+    tips: ['Hit the ball near the edges of your paddle to send it at sharper angles.'],
+    thumbnail: './assets/images/game_cover_breakout_1795734864364.jpg',
+    iframeSrc: './games/breakout.html',
+  },
+  {
+    id: 'slide-2048',
+    title: '2048 Slide',
+    category: 'Puzzle',
+    difficulty: 'Medium',
+    estimatedTime: '5–15 min',
+    players: '1 Player',
+    description: 'Merge matching number tiles on a 4x4 board to reach the 2048 tile before running out of moves.',
+    overview: 'Slide all tiles simultaneously on a 4x4 board and combine matching numbers until you forge the 2048 tile.',
+    controls: 'Arrow keys, WASD, or Swipe',
+    tips: ['Keep your highest-value tile anchored in one corner of the board.'],
+    thumbnail: './assets/images/game_cover_puzzle2048_1795734865213.jpg',
+    iframeSrc: './games/2048.html',
+  },
+  {
+    id: 'minesweeper-classic',
+    title: 'Minesweeper',
+    category: 'Puzzle',
+    difficulty: 'Medium',
+    estimatedTime: '3–10 min',
+    players: '1 Player',
+    description: 'Uncover safe tiles using numerical adjacency clues and flag every hidden mine on the board.',
+    overview: 'Deduce where hidden mines are buried across a 9x9 or 12x12 grid using numerical adjacency clues.',
+    controls: 'Left click reveal · Right click or Mode button to flag',
+    tips: ['Your very first click is always safe and opens a clear starting pocket.'],
+    thumbnail: './assets/images/game_cover_minesweeper_1795734865129.jpg',
+    iframeSrc: './games/minesweeper.html',
+  },
+  {
+    id: 'asteroids-drift',
+    title: 'Asteroids Drift',
+    category: 'Action',
+    difficulty: 'Hard',
+    estimatedTime: '4–12 min',
+    players: '1 Player',
+    description: 'Pilot your starship through deep space, split drifting asteroids, and survive escalating waves.',
+    overview: 'Take control of a vector starfighter with zero-gravity momentum and blast drifting asteroids across escalating waves.',
+    controls: 'Left/Right turn · Up thrust · Spacebar fire',
+    tips: ['Use short thrust bursts rather than holding Up continuously so you stay controllable.'],
+    thumbnail: './assets/images/game_cover_asteroids_1795734865467.jpg',
+    iframeSrc: './games/asteroids.html',
+  },
+  {
+    id: 'memory-match',
+    title: 'Memory Match',
+    category: 'Puzzle',
+    difficulty: 'Easy',
+    estimatedTime: '2–4 min',
+    players: '1 Player',
+    description: 'Flip cards two at a time to locate all matching geometric pairs in the fewest moves.',
+    overview: 'Flip two tiles per turn across 16 geometric cards and clear all 8 pairs in as few moves as possible.',
+    controls: 'Click or tap cards',
+    tips: ['Scan rows systematically from top-left to bottom-right on your opening turns.'],
+    thumbnail: './assets/images/game_cover_memory_1795734866266.jpg',
+    iframeSrc: './games/memory.html',
+  },
+];
 
 const state = {
   catalogGames: [],
@@ -212,7 +371,7 @@ function loadLocalStorage() {
     state.playCounts = {};
   }
 
-  state.lightTheme = localStorage.getItem(THEME_KEY) === 'light';
+  state.lightTheme = safeStorageGet(THEME_KEY) === 'light';
   applyTheme();
 }
 
@@ -225,14 +384,14 @@ function applyTheme() {
 
 function toggleTheme() {
   state.lightTheme = !state.lightTheme;
-  localStorage.setItem(THEME_KEY, state.lightTheme ? 'light' : 'dark');
+  safeStorageSet(THEME_KEY, state.lightTheme ? 'light' : 'dark');
   applyTheme();
 }
 
 function persistLocalArcadeState() {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(state.favorites)));
-  localStorage.setItem(RECENT_GAMES_KEY, JSON.stringify(state.recentIds));
-  localStorage.setItem(PLAY_COUNTS_KEY, JSON.stringify(state.playCounts));
+  safeStorageSet(FAVORITES_KEY, JSON.stringify(Array.from(state.favorites)));
+  safeStorageSet(RECENT_GAMES_KEY, JSON.stringify(state.recentIds));
+  safeStorageSet(PLAY_COUNTS_KEY, JSON.stringify(state.playCounts));
 }
 
 async function persistArcadeState() {
@@ -240,7 +399,8 @@ async function persistArcadeState() {
   renderAccountModalContent();
   if (!state.user) return;
   try {
-    await syncUserArcadeData(state.user.uid, {
+    const fb = await getFirebaseModule();
+    await fb.syncUserArcadeData(state.user.uid, {
       favorites: Array.from(state.favorites),
       recentIds: state.recentIds,
       playCounts: state.playCounts,
@@ -256,7 +416,8 @@ async function persistArcadeState() {
       elements.accountSyncStatus.textContent = 'Local only';
     }
     if (elements.accountSyncError) {
-      elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
+      elements.accountSyncError.textContent =
+        err?.message || 'Cloud sync unavailable right now.';
       elements.accountSyncError.hidden = false;
     }
   }
@@ -333,10 +494,13 @@ function renderFeaturedSpotlight() {
 
   if (game.thumbnail && isSafeIframeUrl(game.thumbnail)) {
     elements.featuredImg.dataset.fb = '';
+    elements.featuredImg.style.opacity = '1';
     elements.featuredImg.onerror = () => {
       if (!elements.featuredImg.dataset.fb && game.thumbnail.startsWith('./assets/')) {
         elements.featuredImg.dataset.fb = '1';
         elements.featuredImg.src = `./public/${game.thumbnail.slice(2)}`;
+      } else {
+        elements.featuredImg.style.opacity = '0';
       }
     };
     elements.featuredImg.src = game.thumbnail;
@@ -711,8 +875,14 @@ function renderCatalog() {
 }
 
 async function loadGamesCatalog() {
-  elements.gamesStatus.hidden = false;
-  elements.gamesStatus.textContent = 'Loading games...';
+  if (state.catalogGames.length === 0) {
+    state.catalogGames = FALLBACK_GAMES;
+    state.featuredIndex = 0;
+    updateMetrics();
+    renderFeaturedSpotlight();
+    renderRecentStrip();
+    renderCatalog();
+  }
 
   try {
     let usedPublicPrefix = false;
@@ -728,7 +898,7 @@ async function loadGamesCatalog() {
     if (!Array.isArray(data)) {
       throw new Error('games.json must contain an array of games.');
     }
-    state.catalogGames = data
+    const parsed = data
       .filter((item) => item && typeof item.id === 'string')
       .map((item) => {
         if (!usedPublicPrefix) return item;
@@ -740,14 +910,16 @@ async function loadGamesCatalog() {
             : rawSrc;
         return { ...item, iframeSrc: adjustedSrc };
       });
-    state.featuredIndex = 0;
-    updateMetrics();
-    renderFeaturedSpotlight();
-    renderRecentStrip();
-    renderCatalog();
+    if (parsed.length > 0) {
+      state.catalogGames = parsed;
+      state.featuredIndex = 0;
+      updateMetrics();
+      renderFeaturedSpotlight();
+      renderRecentStrip();
+      renderCatalog();
+    }
   } catch (err) {
-    elements.gamesStatus.hidden = false;
-    elements.gamesStatus.textContent = `Could not load games (${err.message}).`;
+    console.warn('Using built-in game catalog:', err);
   }
 }
 
@@ -891,69 +1063,74 @@ function applyCloudAccountData(account) {
   renderAccountModalContent();
 }
 
-function initFirebaseAuth() {
-  observeAuth(async (user) => {
-    if (state.unsubscribeAccount) {
-      state.unsubscribeAccount();
-      state.unsubscribeAccount = null;
-    }
+async function initFirebaseAuth() {
+  try {
+    const fb = await getFirebaseModule();
+    fb.observeAuth(async (user) => {
+      if (state.unsubscribeAccount) {
+        state.unsubscribeAccount();
+        state.unsubscribeAccount = null;
+      }
 
-    state.user = user || null;
-    if (!user) {
-      state.accountDoc = null;
+      state.user = user || null;
+      if (!user) {
+        state.accountDoc = null;
+        renderAuthButton();
+        renderAccountModalContent();
+        return;
+      }
+
       renderAuthButton();
-      renderAccountModalContent();
-      return;
-    }
-
-    renderAuthButton();
-    if (elements.accountSyncStatus) {
-      elements.accountSyncStatus.textContent = 'Syncing...';
-    }
-
-    try {
-      const result = await ensureUserAccount(user, {
-        favorites: Array.from(state.favorites),
-        recentIds: state.recentIds,
-        playCounts: state.playCounts,
-      });
-      applyCloudAccountData(result.account);
       if (elements.accountSyncStatus) {
-        elements.accountSyncStatus.textContent = 'Active';
-      }
-      if (elements.accountSyncError) {
-        elements.accountSyncError.hidden = true;
+        elements.accountSyncStatus.textContent = 'Syncing...';
       }
 
-      state.unsubscribeAccount = subscribeToUserAccount(
-        user.uid,
-        (docData) => {
-          applyCloudAccountData(docData);
-        },
-        (err) => {
-          if (elements.accountSyncStatus) {
-            elements.accountSyncStatus.textContent = 'Error';
-          }
-          if (elements.accountSyncError) {
-            elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
-            elements.accountSyncError.hidden = false;
-          }
+      try {
+        const result = await fb.ensureUserAccount(user, {
+          favorites: Array.from(state.favorites),
+          recentIds: state.recentIds,
+          playCounts: state.playCounts,
+        });
+        applyCloudAccountData(result.account);
+        if (elements.accountSyncStatus) {
+          elements.accountSyncStatus.textContent = 'Active';
         }
-      );
-    } catch (err) {
-      if (elements.accountSyncStatus) {
-        elements.accountSyncStatus.textContent = 'Local only';
+        if (elements.accountSyncError) {
+          elements.accountSyncError.hidden = true;
+        }
+
+        state.unsubscribeAccount = fb.subscribeToUserAccount(
+          user.uid,
+          (docData) => {
+            applyCloudAccountData(docData);
+          },
+          (err) => {
+            if (elements.accountSyncStatus) {
+              elements.accountSyncStatus.textContent = 'Error';
+            }
+            if (elements.accountSyncError) {
+              elements.accountSyncError.textContent = fb.getFriendlyFirebaseError(err);
+              elements.accountSyncError.hidden = false;
+            }
+          }
+        );
+      } catch (err) {
+        if (elements.accountSyncStatus) {
+          elements.accountSyncStatus.textContent = 'Local only';
+        }
+        if (elements.accountSyncError) {
+          elements.accountSyncError.textContent = fb.getFriendlyFirebaseError(err);
+          elements.accountSyncError.hidden = false;
+        }
+        if (elements.accountError) {
+          elements.accountError.textContent = fb.getFriendlyFirebaseError(err);
+          elements.accountError.hidden = false;
+        }
       }
-      if (elements.accountSyncError) {
-        elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
-        elements.accountSyncError.hidden = false;
-      }
-      if (elements.accountError) {
-        elements.accountError.textContent = getFriendlyFirebaseError(err);
-        elements.accountError.hidden = false;
-      }
-    }
-  });
+    });
+  } catch (err) {
+    console.warn('Account service unavailable:', err);
+  }
 }
 
 function wireEvents() {
@@ -1006,11 +1183,23 @@ function wireEvents() {
       elements.accountError.textContent = '';
     }
     try {
-      await signInWithGoogle();
-      closeAccountModal();
+      const fb = await getFirebaseModule();
+      const cred = await fb.signInWithGoogle();
+      if (cred?.user) {
+        state.user = cred.user;
+        renderAuthButton();
+        renderAccountModalContent();
+      }
     } catch (err) {
+      let msg = 'Could not sign in right now. Please try again.';
+      try {
+        const fb = await getFirebaseModule();
+        msg = fb.getFriendlyFirebaseError(err);
+      } catch {
+        msg = err?.message || msg;
+      }
       if (elements.accountError) {
-        elements.accountError.textContent = getFriendlyFirebaseError(err);
+        elements.accountError.textContent = msg;
         elements.accountError.hidden = false;
       }
     } finally {
@@ -1024,11 +1213,19 @@ function wireEvents() {
     state.authPending = true;
     elements.signOutBtn.disabled = true;
     try {
-      await signOutAccount();
+      const fb = await getFirebaseModule();
+      await fb.signOutAccount();
       closeAccountModal();
     } catch (err) {
+      let msg = 'Could not sign out right now.';
+      try {
+        const fb = await getFirebaseModule();
+        msg = fb.getFriendlyFirebaseError(err);
+      } catch {
+        msg = err?.message || msg;
+      }
       if (elements.accountSyncError) {
-        elements.accountSyncError.textContent = getFriendlyFirebaseError(err);
+        elements.accountSyncError.textContent = msg;
         elements.accountSyncError.hidden = false;
       }
     } finally {
@@ -1130,9 +1327,36 @@ function wireEvents() {
   });
 }
 
-loadLocalStorage();
-wireEvents();
-renderAuthButton();
+window.addEventListener('error', (event) => {
+  if (elements.gamesGrid && elements.gamesGrid.children.length === 0 && elements.gamesStatus) {
+    elements.gamesStatus.hidden = false;
+    elements.gamesStatus.textContent = `App error: ${event.message || 'Unknown error'}`;
+  }
+});
+
+try {
+  loadLocalStorage();
+} catch (err) {
+  console.warn('Storage init failed:', err);
+}
+
+try {
+  wireEvents();
+} catch (err) {
+  console.warn('Event wiring failed:', err);
+}
+
+try {
+  renderAuthButton();
+} catch (err) {
+  console.warn('Auth button render failed:', err);
+}
+
+state.catalogGames = FALLBACK_GAMES;
 updateMetrics();
-loadGamesCatalog();
-initFirebaseAuth();
+renderFeaturedSpotlight();
+renderRecentStrip();
+renderCatalog();
+
+void loadGamesCatalog();
+void initFirebaseAuth();

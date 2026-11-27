@@ -285,18 +285,33 @@ export async function syncUserArcadeData(uid, arcadeState) {
 }
 
 export function getFriendlyFirebaseError(error) {
+  const code = typeof error?.code === 'string' ? error.code : '';
   const raw = error instanceof Error ? error.message : String(error);
-  if (raw.includes('popup-closed-by-user')) {
+  const combined = `${code} ${raw}`;
+
+  if (combined.includes('popup-closed-by-user')) {
     return 'Sign-in window was closed before completing.';
   }
-  if (raw.includes('popup-blocked')) {
+  if (combined.includes('cancelled-popup-request')) {
+    return 'Sign-in was interrupted by another sign-in request. Please try once more.';
+  }
+  if (combined.includes('popup-blocked')) {
     return 'Pop-up was blocked by your browser. Please allow pop-ups and try again.';
   }
-  if (raw.includes('Quota exceeded')) {
+  if (combined.includes('unauthorized-domain')) {
+    return 'This preview domain is not authorized for Google Sign-In in Firebase Auth settings.';
+  }
+  if (combined.includes('operation-not-allowed')) {
+    return 'Google Sign-In is not enabled for this Firebase project yet.';
+  }
+  if (combined.includes('network-request-failed')) {
+    return 'Network error while reaching Google Sign-In. Check your connection and try again.';
+  }
+  if (combined.includes('Quota exceeded')) {
     return 'Daily database quota exceeded. Your local progress is still saved and cloud sync will resume tomorrow.';
   }
-  if (raw.includes('Missing or insufficient permissions')) {
+  if (combined.includes('Missing or insufficient permissions')) {
     return 'Unable to access your account data right now. Please sign out and sign back in.';
   }
-  return 'Could not sign in right now. Please try again.';
+  return code ? `Sign-in failed (${code}). Please try again.` : 'Could not sign in right now. Please try again.';
 }

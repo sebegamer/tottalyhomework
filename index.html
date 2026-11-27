@@ -147,6 +147,7 @@
                 src="./assets/images/game_cover_minecraft_1795737499846.jpg"
                 alt="Featured game cover"
                 referrerpolicy="no-referrer"
+                onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='./public/assets/images/game_cover_minecraft_1795737499846.jpg';}else{this.style.opacity='0';}"
               />
               <div class="featured-scrim" aria-hidden="true"></div>
               <div class="featured-overlay">
@@ -248,7 +249,7 @@
 
       <!-- Game Library Grid -->
       <section aria-label="Game library">
-        <div id="games-status" class="status-message" hidden></div>
+        <div id="games-status" class="status-message">Loading games...</div>
         <div id="games-grid" class="games-grid"></div>
       </section>
     </main>
@@ -400,6 +401,10 @@
       </div>
     </div>
 
-    <script type="module" src="./main.js"></script>
+    <script
+      type="module"
+      src="./main.js"
+      onerror="var s=document.getElementById('games-status');if(s){s.hidden=false;s.textContent='Unable to load ./main.js. Please hard-refresh the preview.';}"
+    ></script>
   </body>
 </html>
