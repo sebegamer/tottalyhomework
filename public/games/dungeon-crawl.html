@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dungeon Dash</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  canvas{flex:1;max-height:420px;aspect-ratio:13/10;background:#070c17;border:1px solid rgba(255,255,255,.14);border-radius:10px}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:7px;padding:6px 12px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Floor: <strong id="fl">1</strong> · Key: <strong id="ky">No</strong> · HP: <strong id="hp">3</strong></span><button id="rst" type="button">New Run</button></div>
+  <canvas id="c" width="520" height="400"></canvas>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), W = 13, H = 10, SZ = 40;
+let floor = 1, hp = 3, hasKey = false, p = {x:1,y:1}, keyPos = {x:1,y:8}, exitPos = {x:11,y:8}, slimes = [], walls = new Set(), dead = false;
+
+function genFloor() {
+  walls = new Set();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (x === 0 || y === 0 || x === W - 1 || y === H - 1) walls.add(`${x},${y}`);
+    else if (Math.random() < 0.17 && !(x <= 2 && y <= 2) && !(x >= 10 && y >= 7)) walls.add(`${x},${y}`);
+  }
+  p = {x:1, y:1}; hasKey = false;
+  keyPos = {x: 1 + Math.floor(Math.random()*5), y: 6 + Math.floor(Math.random()*3)};
+  walls.delete(`${keyPos.x},${keyPos.y}`);
+  exitPos = {x: 11, y: 8}; walls.delete('11,8');
+  slimes = Array.from({length: Math.min(6, 1 + floor)}, (_, i) => ({ x: 4 + i, y: 2 + (i % 5) }));
+  slimes.forEach(s => walls.delete(`${s.x},${s.y}`));
+  hud(); draw();
+}
+function hud() {
+  document.getElementById('fl').textContent = floor;
+  document.getElementById('ky').textContent = hasKey ? 'Yes!' : 'No';
+  document.getElementById('hp').textContent = hp;
+}
+function move(dx, dy) {
+  if (dead) return;
+  const nx = p.x + dx, ny = p.y + dy;
+  if (!walls.has(`${nx},${ny}`)) { p.x = nx; p.y = ny; }
+  if (p.x === keyPos.x && p.y === keyPos.y) hasKey = true;
+  if (p.x === exitPos.x && p.y === exitPos.y && hasKey) { floor++; genFloor(); return; }
+  slimes.forEach(s => {
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([ox,oy]) => !walls.has(`${s.x+ox},${s.y+oy}`));
+    if (dirs.length) {
+      dirs.sort((a,b) => Math.hypot(s.x+a[0]-p.x, s.y+a[1]-p.y) - Math.hypot(s.x+b[0]-p.x, s.y+b[1]-p.y));
+      const pick = Math.random() < 0.7 ? dirs[0] : dirs[Math.floor(Math.random()*dirs.length)];
+      s.x += pick[0]; s.y += pick[1];
+    }
+    if (s.x === p.x && s.y === p.y) { hp--; if (hp <= 0) dead = true; }
+  });
+  hud(); draw();
+}
+function draw() {
+  ctx.fillStyle = '#070c17'; ctx.fillRect(0, 0, c.width, c.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (walls.has(`${x},${y}`)) { ctx.fillStyle = '#334155'; ctx.fillRect(x*SZ+2, y*SZ+2, SZ-4, SZ-4); }
+  }
+  ctx.fillStyle = hasKey ? '#22c55e' : '#475569';
+  ctx.fillRect(exitPos.x*SZ+6, exitPos.y*SZ+6, SZ-12, SZ-12);
+  if (!hasKey) { ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(keyPos.x*SZ+20, keyPos.y*SZ+20, 9, 0, Math.PI*2); ctx.fill(); }
+  slimes.forEach(s => { ctx.fillStyle = '#f43f5e'; ctx.beginPath(); ctx.arc(s.x*SZ+20, s.y*SZ+20, 12, 0, Math.PI*2); ctx.fill(); });
+  ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x*SZ+20, p.y*SZ+20, 13, 0, Math.PI*2); ctx.fill();
+  if (dead) {
+    ctx.fillStyle = 'rgba(7,12,23,0.78)'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 22px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(`Defeated on Floor ${floor} — Click New Run`, 260, 200);
+  }
+}
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  if (k === 'arrowup' || k === 'w') move(0, -1);
+  if (k === 'arrowdown' || k === 's') move(0, 1);
+  if (k === 'arrowleft' || k === 'a') move(-1, 0);
+  if (k === 'arrowright' || k === 'd') move(1, 0);
+});
+document.getElementById('rst').addEventListener('click', () => { floor = 1; hp = 3; dead = false; genFloor(); });
+genFloor();
+</script>
+</body>
+</html>

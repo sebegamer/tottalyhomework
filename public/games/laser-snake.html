@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tron Light Cycle</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:680px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:680px;min-height:0}
+  canvas{width:100%;height:100%;background:#060a14;border:1px solid rgba(255,255,255,.12);border-radius:10px}
+  .ov{position:absolute;inset:0;background:rgba(6,10,20,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>You: <strong id="p1">0</strong> · AI: <strong id="ai">0</strong></span><span>WASD / Arrow keys to steer</span></div>
+  <div class="stage">
+    <canvas id="c" width="680" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Tron Light Cycle</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Steer your neon trail and cut off the rival light cycle before hitting any wall or trail.</p>
+      <button id="go" type="button">Start Race</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const W = 68, H = 44, SZ = 10;
+let grid, p, cpu, s1 = 0, s2 = 0, state = 'MENU';
+
+function start() {
+  grid = Array.from({length: H}, () => Array(W).fill(0));
+  p = { x: 14, y: 22, dx: 1, dy: 0 };
+  cpu = { x: 54, y: 22, dx: -1, dy: 0 };
+  grid[p.y][p.x] = 1; grid[cpu.y][cpu.x] = 2;
+  state = 'PLAY'; ov.hidden = true;
+}
+function free(x, y) { return x >= 0 && x < W && y >= 0 && y < H && grid[y][x] === 0; }
+function step() {
+  if (state !== 'PLAY') return;
+  const nx = p.x + p.dx, ny = p.y + p.dy;
+  const cands = [[cpu.dx,cpu.dy],[0,-1],[0,1],[-1,0],[1,0]].filter(([dx,dy]) => !(dx === -cpu.dx && dy === -cpu.dy) && free(cpu.x + dx, cpu.y + dy));
+  if (cands.length) { const pick = free(cpu.x + cpu.dx, cpu.y + cpu.dy) && Math.random() < 0.85 ? [cpu.dx, cpu.dy] : cands[Math.floor(Math.random()*cands.length)]; cpu.dx = pick[0]; cpu.dy = pick[1]; }
+  const cx = cpu.x + cpu.dx, cy = cpu.y + cpu.dy;
+
+  const pDead = !free(nx, ny), cDead = !free(cx, cy) || (nx === cx && ny === cy);
+  if (pDead || cDead) {
+    state = 'OVER';
+    if (!pDead && cDead) { s1++; document.getElementById('ov-t').textContent = 'You Won the Round!'; }
+    else if (pDead && !cDead) { s2++; document.getElementById('ov-t').textContent = 'Crashed Into Trail!'; }
+    else { document.getElementById('ov-t').textContent = 'Head-On Draw!'; }
+    document.getElementById('p1').textContent = s1; document.getElementById('ai').textContent = s2;
+    document.getElementById('go').textContent = 'Next Round';
+    ov.hidden = false; return;
+  }
+  p.x = nx; p.y = ny; grid[ny][nx] = 1;
+  cpu.x = cx; cpu.y = cy; grid[cy][cx] = 2;
+  draw();
+}
+function draw() {
+  ctx.fillStyle = '#060a14'; ctx.fillRect(0, 0, c.width, c.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (grid?.[y]?.[x] === 1) { ctx.fillStyle = '#38bdf8'; ctx.fillRect(x*SZ, y*SZ, SZ-1, SZ-1); }
+    if (grid?.[y]?.[x] === 2) { ctx.fillStyle = '#f43f5e'; ctx.fillRect(x*SZ, y*SZ, SZ-1, SZ-1); }
+  }
+}
+setInterval(step, 65);
+document.getElementById('go').addEventListener('click', start);
+document.addEventListener('keydown', (e) => {
+  if (state !== 'PLAY') return;
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  if ((k === 'arrowup' || k === 'w') && p.dy !== 1) { p.dx = 0; p.dy = -1; }
+  if ((k === 'arrowdown' || k === 's') && p.dy !== -1) { p.dx = 0; p.dy = 1; }
+  if ((k === 'arrowleft' || k === 'a') && p.dx !== 1) { p.dx = -1; p.dy = 0; }
+  if ((k === 'arrowright' || k === 'd') && p.dx !== -1) { p.dx = 1; p.dy = 0; }
+});
+draw();
+</script>
+</body>
+</html>

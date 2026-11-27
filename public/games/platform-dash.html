@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spike Dash</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:720px;display:flex;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:720px;min-height:0}
+  canvas{width:100%;height:100%;background:#080d1c;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer}
+  .ov{position:absolute;inset:0;background:rgba(8,13,28,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Score: <strong id="sc">0</strong> · Best: <strong id="best">0</strong></span><span>Space / Click to Jump (Double Jump!)</span></div>
+  <div class="stage">
+    <canvas id="c" width="720" height="400"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Spike Dash</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Time your jumps and double jumps across neon spikes and elevated blocks.</p>
+      <button id="go" type="button">Dash!</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const GROUND = 330, KEY = 'th_spike_best';
+let best = Number(localStorage.getItem(KEY) || 0); document.getElementById('best').textContent = best;
+let py = GROUND, vy = 0, rot = 0, jumps = 0, items = [], score = 0, spd = 6.2, tSpawn = 45, state = 'MENU';
+
+function start() {
+  py = GROUND; vy = 0; rot = 0; jumps = 0; items = []; score = 0; spd = 6.2; tSpawn = 35;
+  document.getElementById('sc').textContent = 0; state = 'PLAY'; ov.hidden = true;
+}
+function jump() {
+  if (state === 'MENU') start();
+  if (state === 'PLAY' && jumps < 2) { vy = -11.8; jumps++; }
+}
+function loop() {
+  if (state === 'PLAY') {
+    score++; spd = 6.2 + Math.min(5, score / 400);
+    if (score % 5 === 0) {
+      const sc = Math.floor(score / 5);
+      document.getElementById('sc').textContent = sc;
+      if (sc > best) { best = sc; document.getElementById('best').textContent = best; localStorage.setItem(KEY, best); }
+    }
+    vy += 0.65; py += vy;
+    if (py >= GROUND) { py = GROUND; vy = 0; jumps = 0; rot = 0; } else rot += 0.14;
+    tSpawn--;
+    if (tSpawn <= 0) {
+      const kind = Math.random() < 0.4 ? 'double' : Math.random() < 0.5 ? 'block' : 'spike';
+      items.push({ x: c.width + 30, kind });
+      tSpawn = 44 + Math.random() * 38;
+    }
+    items.forEach(it => it.x -= spd);
+    items = items.filter(it => it.x > -80);
+    for (const it of items) {
+      const px1 = 110, px2 = 142, py1 = py - 32, py2 = py;
+      if (it.kind === 'block') {
+        if (px2 > it.x && px1 < it.x + 48 && py2 > GROUND - 44 && py1 < GROUND) {
+          if (py2 - vy <= GROUND - 40) { py = GROUND - 44; vy = 0; jumps = 0; }
+          else die();
+        }
+      } else {
+        const w = it.kind === 'double' ? 48 : 26;
+        if (px2 - 4 > it.x && px1 + 4 < it.x + w && py2 > GROUND - 26) die();
+      }
+    }
+  }
+  ctx.fillStyle = '#080d1c'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#1e293b'; ctx.fillRect(0, GROUND, c.width, 70);
+  items.forEach(it => {
+    if (it.kind === 'block') {
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(it.x, GROUND - 44, 48, 44);
+    } else {
+      const count = it.kind === 'double' ? 2 : 1;
+      for (let i = 0; i < count; i++) {
+        const sx = it.x + i * 24;
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath(); ctx.moveTo(sx, GROUND); ctx.lineTo(sx + 13, GROUND - 28); ctx.lineTo(sx + 26, GROUND); ctx.closePath(); ctx.fill();
+      }
+    }
+  });
+  ctx.save(); ctx.translate(126, py - 16); ctx.rotate(rot);
+  ctx.fillStyle = '#f59e0b'; ctx.fillRect(-16, -16, 32, 32);
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+function die() {
+  state = 'OVER';
+  document.getElementById('ov-t').textContent = 'Crashed!';
+  document.getElementById('ov-p').textContent = `Score: ${Math.floor(score / 5)}`;
+  document.getElementById('go').textContent = 'Retry';
+  ov.hidden = false;
+}
+document.getElementById('go').addEventListener('click', start);
+c.addEventListener('pointerdown', jump);
+document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); } });
+loop();
+</script>
+</body>
+</html>

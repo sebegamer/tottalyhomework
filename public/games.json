@@ -15,8 +15,25 @@
       "Use Fullscreen mode in the player bar above for the sharpest viewport and mouse lock."
     ],
     "thumbnail": "./assets/images/game_cover_minecraft_1795737499846.jpg",
-    "iframe": "<iframe src=\"https://d1tm91r4ytbt54.cloudfront.net/2779cbcb-a02f-48a3-9e2e-95a8d123d165/1685483461665/web/index.html\" title=\"Minecraft\" allow=\"fullscreen; autoplay; gamepad; pointer-lock\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "https://d1tm91r4ytbt54.cloudfront.net/2779cbcb-a02f-48a3-9e2e-95a8d123d165/1685483461665/web/index.html"
+  },
+  {
+    "id": "sonic-mania-edition",
+    "title": "Sonic and More Games",
+    "category": "Action",
+    "difficulty": "Medium",
+    "estimatedTime": "10–30 min",
+    "players": "1 Player",
+    "description": "Play Sonic Mania Edition plus bonus retro arcade games right in your browser.",
+    "overview": "Launch Sonic Mania Edition alongside a full collection of classic retro games directly in your browser. Dash through classic loops, collect golden rings, spin-dash past enemies, or switch into bonus arcade favorites anytime.",
+    "controls": "Arrow keys or WASD move · Space / Z / Enter jump & spin dash",
+    "tips": [
+      "Hold Down and tap Jump while standing still to charge a fast Spin Dash.",
+      "Keep at least one golden ring on hand so a hit won't cost a life.",
+      "Click Fullscreen in the player bar above for crisp retro scaling."
+    ],
+    "thumbnail": "./assets/images/game_cover_sonic_mania_1795811447480.jpg",
+    "iframeSrc": "https://www.y9freegames.com/game/sonic-mania-edition/"
   },
   {
     "id": "grid-snake",
@@ -26,15 +43,13 @@
     "estimatedTime": "3–8 min",
     "players": "1 Player",
     "description": "Steer the snake across the grid, collect golden apples, and avoid walls or your own tail.",
-    "overview": "Guide your snake through a 20x20 arena, eating golden apples to extend your tail and build a high score. Each apple slightly increases your movement speed, turning tight corners into high-stakes maneuvers.",
+    "overview": "Guide your snake through a 20x20 arena, eating golden apples to extend your tail and build a high score. Each apple slightly increases your movement speed.",
     "controls": "Arrow keys or WASD (P to pause)",
     "tips": [
       "Plan turns two tiles ahead once your snake grows past 15 segments.",
-      "Loop along the outer edges to keep the center open for safe escapes.",
-      "Touch directional buttons appear automatically on smaller screens."
+      "Loop along the outer edges to keep the center open for safe escapes."
     ],
     "thumbnail": "./assets/images/game_cover_snake_1795734863750.jpg",
-    "iframe": "<iframe src=\"./games/snake.html\" title=\"Grid Snake\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/snake.html"
   },
   {
@@ -45,15 +60,13 @@
     "estimatedTime": "5–12 min",
     "players": "1 Player",
     "description": "Deflect the ball off your paddle to clear layered brick formations across progressive rounds.",
-    "overview": "Bounce the steel ball off your paddle to shatter five layered rows of colored bricks. Clearing a full formation advances you to a faster round, while missing the ball costs one of your three lives.",
+    "overview": "Bounce the steel ball off your paddle to shatter five layered rows of colored bricks. Clearing a full formation advances you to a faster round.",
     "controls": "Mouse, Touch drag, or Left/Right arrows",
     "tips": [
       "Hit the ball near the edges of your paddle to send it at sharper angles.",
-      "Aim to punch a tunnel up one side so the ball bounces above the top row.",
-      "Each new round speeds up the ball—stay centered between volleys."
+      "Punch a tunnel up one side so the ball bounces above the top row."
     ],
     "thumbnail": "./assets/images/game_cover_breakout_1795734864364.jpg",
-    "iframe": "<iframe src=\"./games/breakout.html\" title=\"Brick Breaker\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/breakout.html"
   },
   {
@@ -64,15 +77,13 @@
     "estimatedTime": "5–15 min",
     "players": "1 Player",
     "description": "Merge matching number tiles on a 4x4 board to reach the 2048 tile before running out of moves.",
-    "overview": "Slide all tiles simultaneously in one of four directions on a 4x4 board. Whenever two tiles with the same number collide, they merge into their sum—keep combining values until you forge the 2048 tile.",
+    "overview": "Slide all tiles simultaneously in one of four directions on a 4x4 board. Combine matching numbers until you forge the 2048 tile.",
     "controls": "Arrow keys, WASD, or Swipe",
     "tips": [
       "Keep your highest-value tile anchored in one corner of the board.",
-      "Build descending chains along the edge next to your anchor corner.",
-      "Use the Undo button if a forced move breaks your tile order."
+      "Build descending chains along the edge next to your anchor corner."
     ],
     "thumbnail": "./assets/images/game_cover_puzzle2048_1795734865213.jpg",
-    "iframe": "<iframe src=\"./games/2048.html\" title=\"2048 Slide\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/2048.html"
   },
   {
@@ -83,15 +94,13 @@
     "estimatedTime": "3–10 min",
     "players": "1 Player",
     "description": "Uncover safe tiles using numerical adjacency clues and flag every hidden mine on the board.",
-    "overview": "Deduce where hidden mines are buried across a 9x9 or 12x12 grid. Each revealed number tells you how many mines touch that square across all eight neighboring tiles—clear every safe square without detonating a mine.",
+    "overview": "Deduce where hidden mines are buried across a 9x9 or 12x12 grid using numerical adjacency clues.",
     "controls": "Left click reveal · Right click or Mode button to flag",
     "tips": [
       "Your very first click is always safe and opens a clear starting pocket.",
-      "Switch between 9x9 (10 mines) and 12x12 (22 mines) in the top bar.",
-      "Toggle Mode: Flag for fast one-handed flagging on trackpads or touchscreens."
+      "Switch between 9x9 and 12x12 grids in the top bar."
     ],
     "thumbnail": "./assets/images/game_cover_minesweeper_1795734865129.jpg",
-    "iframe": "<iframe src=\"./games/minesweeper.html\" title=\"Minesweeper\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/minesweeper.html"
   },
   {
@@ -102,15 +111,13 @@
     "estimatedTime": "4–12 min",
     "players": "1 Player",
     "description": "Pilot your starship through deep space, split drifting asteroids, and survive escalating waves.",
-    "overview": "Take control of a vector starfighter with zero-gravity momentum. Blast large asteroids into smaller, faster fragments while dodging debris across endless escalating waves with three lives.",
+    "overview": "Take control of a vector starfighter with zero-gravity momentum and blast drifting asteroids across endless escalating waves.",
     "controls": "Left/Right turn · Up thrust · Spacebar fire",
     "tips": [
-      "Use short thrust bursts rather than holding Up continuously so you stay controllable.",
-      "Remember screen wrap—shots and asteroids cross from one edge to the opposite side.",
+      "Use short thrust bursts rather than holding Up continuously.",
       "Clear smaller fast fragments before splitting another large rock."
     ],
     "thumbnail": "./assets/images/game_cover_asteroids_1795734865467.jpg",
-    "iframe": "<iframe src=\"./games/asteroids.html\" title=\"Asteroids Drift\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/asteroids.html"
   },
   {
@@ -121,15 +128,659 @@
     "estimatedTime": "2–4 min",
     "players": "1 Player",
     "description": "Flip cards two at a time to locate all matching geometric pairs in the fewest moves.",
-    "overview": "A calm, focused visual recall challenge featuring 16 face-down geometric tiles (8 matching pairs). Flip two tiles per turn and clear the entire deck in as few moves as possible to beat your personal best.",
+    "overview": "Flip two tiles per turn across 16 face-down geometric cards and clear all 8 pairs in as few moves as possible.",
     "controls": "Click or tap cards",
     "tips": [
       "Scan rows systematically from top-left to bottom-right on your opening turns.",
-      "Pay close attention to unmatched flips—every mismatch teaches two positions.",
-      "Use New Shuffle anytime to beat your saved fewest-moves record."
+      "Every mismatch teaches two positions—lock them in mentally."
     ],
     "thumbnail": "./assets/images/game_cover_memory_1795734866266.jpg",
-    "iframe": "<iframe src=\"./games/memory.html\" title=\"Memory Match\" loading=\"lazy\" allowfullscreen></iframe>",
     "iframeSrc": "./games/memory.html"
+  },
+  {
+    "id": "voxel-builder",
+    "title": "Voxel Block Builder",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–20 min",
+    "players": "1 Player",
+    "description": "Sculpt 2D terrain, place glowing torches, brick castles, and water pools in a side-view block sandbox.",
+    "overview": "Build custom pixel structures across a 32x20 terrain grid with Grass, Dirt, Stone, Wood, Brick, Water, and Torch blocks plus Day/Night sky switching.",
+    "controls": "Left click/drag place · Right click erase · Toolbar select block",
+    "tips": [
+      "Switch Sky to Night and place Torch blocks to light up stone towers.",
+      "Use New Terrain anytime for a fresh procedurally generated landscape."
+    ],
+    "thumbnail": "./assets/covers/voxel-builder.svg",
+    "iframeSrc": "./games/voxel-builder.html"
+  },
+  {
+    "id": "pixel-sand",
+    "title": "Falling Sand Lab",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Experiment with real-time cellular automata physics using sand, water, fire, wood, stone, and acid.",
+    "overview": "Paint interactive elements onto a particle simulation grid and watch gravity, fluid displacement, burning wood, and acid reactions unfold.",
+    "controls": "Click & drag to pour elements · Adjust brush size in toolbar",
+    "tips": [
+      "Build a stone basin, fill it with water, then pour sand on top to watch displacement.",
+      "Ignite wooden bridges with Fire and extinguish flames with Water."
+    ],
+    "thumbnail": "./assets/covers/pixel-sand.svg",
+    "iframeSrc": "./games/pixel-sand.html"
+  },
+  {
+    "id": "gravity-orbits",
+    "title": "Orbit Sandbox",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Fling planets and stars into space and watch real N-body gravitational orbits and trails.",
+    "overview": "Pull back and release anywhere in the cosmos to launch planets or massive stars with custom velocity vectors and watch glowing orbital paths.",
+    "controls": "Click & drag anywhere to launch a planet or star",
+    "tips": [
+      "Pull perpendicular to the central star for clean circular orbits.",
+      "Switch Type to Star to create binary star systems."
+    ],
+    "thumbnail": "./assets/covers/gravity-orbits.svg",
+    "iframeSrc": "./games/gravity-orbits.html"
+  },
+  {
+    "id": "circuit-maker",
+    "title": "Logic Circuit Forge",
+    "category": "Sandbox",
+    "difficulty": "Medium",
+    "estimatedTime": "5–20 min",
+    "players": "1 Player",
+    "description": "Wire switches, lamps, AND, OR, XOR, and NOT gates together to build live digital logic circuits.",
+    "overview": "An interactive digital logic sandbox where you place switches, gates, and output lamps, connect live signal wires, and toggle inputs.",
+    "controls": "Select part & click canvas to place · Select Wire & click two parts",
+    "tips": [
+      "Start with Click / Toggle mode on the XOR Demo to watch live signal routing.",
+      "Chain NOT and AND gates to construct custom NAND logic."
+    ],
+    "thumbnail": "./assets/covers/circuit-maker.svg",
+    "iframeSrc": "./games/circuit-maker.html"
+  },
+  {
+    "id": "pixel-studio",
+    "title": "Pixel Sprite Studio",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–20 min",
+    "players": "1 Player",
+    "description": "Paint 16x16 retro game sprites with mirror symmetry, flood fill, and a live crisp pixel preview.",
+    "overview": "Craft retro pixel characters, icons, and tiles on a 16x16 grid with a 12-color palette, vertical mirror mode, and flood fill.",
+    "controls": "Click/drag paint · Toggle Mirror or Fill in top bar",
+    "tips": [
+      "Turn on Mirror mode to draw symmetrical spaceships or monsters in seconds.",
+      "Use Fill mode to drop a clean background color behind your sprite."
+    ],
+    "thumbnail": "./assets/covers/pixel-studio.svg",
+    "iframeSrc": "./games/pixel-studio.html"
+  },
+  {
+    "id": "wave-synth",
+    "title": "Beat & Synth Lab",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Program 16-step synth and drum loops with live Web Audio synthesis and adjustable BPM tempo.",
+    "overview": "Compose electronic beats across Lead, Synth, Bass, Snare, and Kick tracks on an interactive 16-step grid.",
+    "controls": "Click pads to toggle notes · Drag BPM slider · Click Play Loop",
+    "tips": [
+      "Load Groove for an instant starter beat, then remix the Lead notes.",
+      "Place Kick notes on steps 1 and 9 for a punchy foundation."
+    ],
+    "thumbnail": "./assets/covers/wave-synth.svg",
+    "iframeSrc": "./games/wave-synth.html"
+  },
+  {
+    "id": "domino-physics",
+    "title": "Marble Track Maker",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Draw ramps and bouncy pads, then drop physics marbles to watch them ricochet down your course.",
+    "overview": "Design custom gravity tracks with angled ramps and high-bounce green bumpers, then unleash Marble Rain.",
+    "controls": "Drag to draw ramps or bumpers · Click Drop Marble or Marble Rain",
+    "tips": [
+      "Angle green Bumper Pads slightly upward to launch marbles across gaps.",
+      "Hit Marble Rain after building a funnel for chaotic chain reactions."
+    ],
+    "thumbnail": "./assets/covers/domino-physics.svg",
+    "iframeSrc": "./games/domino-physics.html"
+  },
+  {
+    "id": "city-grid",
+    "title": "Tiny City Planner",
+    "category": "Sandbox",
+    "difficulty": "Easy",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Place houses, shops, parks, roads, and solar plants on a grid while balancing power and happiness.",
+    "overview": "Design a thriving micro-city on a 10x7 grid. Keep solar power positive and add parks to keep citizen happiness at 100%.",
+    "controls": "Pick a building tool and click any tile on the city grid",
+    "tips": [
+      "Build Solar plants early so your city never dips into negative power.",
+      "Add one Park for every 3 Houses to keep citizen joy maxed out."
+    ],
+    "thumbnail": "./assets/covers/city-grid.svg",
+    "iframeSrc": "./games/city-grid.html"
+  },
+  {
+    "id": "flappy-glider",
+    "title": "Sky Hopper",
+    "category": "Arcade",
+    "difficulty": "Medium",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Tap to boost between glowing skyline pillars and chase a new personal high score.",
+    "overview": "Time every boost cleanly to thread the needle through endless neon skyline gates without clipping a pillar.",
+    "controls": "Space, Up arrow, or Click/Tap to flap",
+    "tips": [
+      "Use quick light taps before entering each gap rather than diving steeply.",
+      "Stay near the center height whenever a gap is far away."
+    ],
+    "thumbnail": "./assets/covers/flappy-glider.svg",
+    "iframeSrc": "./games/flappy-glider.html"
+  },
+  {
+    "id": "paddle-pong",
+    "title": "Neon Rally Pong",
+    "category": "Arcade",
+    "difficulty": "Easy",
+    "estimatedTime": "3–8 min",
+    "players": "1–2 Players",
+    "description": "Fast arcade paddle rally against a responsive CPU or a friend in local 2-player mode.",
+    "overview": "Classic arcade table tennis with spin angles, escalating ball velocity on long rallies, and toggleable 1P/2P controls.",
+    "controls": "Mouse or W/S (Player 1) · Up/Down arrows (Player 2 in 2P mode)",
+    "tips": [
+      "Strike the ball off the top or bottom tip of your paddle for steep angled shots.",
+      "Switch to 2P Mode to challenge a friend on the same keyboard."
+    ],
+    "thumbnail": "./assets/covers/paddle-pong.svg",
+    "iframeSrc": "./games/paddle-pong.html"
+  },
+  {
+    "id": "space-invaders",
+    "title": "Star Squadron",
+    "category": "Arcade",
+    "difficulty": "Medium",
+    "estimatedTime": "4–10 min",
+    "players": "1 Player",
+    "description": "Blast descending rows of alien formations and clear escalating waves before they breach.",
+    "overview": "Command your orbital cannon against marching alien squads firing back across progressively faster waves.",
+    "controls": "Left/Right or A/D move · Space fire",
+    "tips": [
+      "Trim the outer columns first to slow down how quickly the fleet drops rows.",
+      "Keep moving laterally so downward enemy bolts miss you."
+    ],
+    "thumbnail": "./assets/covers/space-invaders.svg",
+    "iframeSrc": "./games/space-invaders.html"
+  },
+  {
+    "id": "stack-tower",
+    "title": "Skyline Stacker",
+    "category": "Arcade",
+    "difficulty": "Easy",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Drop sliding beams with pinpoint timing to build the tallest skyscraper without losing width.",
+    "overview": "Each mistimed drop slices off the overhanging beam—align within a few pixels for a perfect snap and climb skyward.",
+    "controls": "Space or Click/Tap to drop block",
+    "tips": [
+      "Watch one edge of the tower steadily rather than tracking the whole block.",
+      "Perfectly aligned drops preserve your full platform width."
+    ],
+    "thumbnail": "./assets/covers/stack-tower.svg",
+    "iframeSrc": "./games/stack-tower.html"
+  },
+  {
+    "id": "dino-sprint",
+    "title": "Canyon Runner",
+    "category": "Arcade",
+    "difficulty": "Easy",
+    "estimatedTime": "3–8 min",
+    "players": "1 Player",
+    "description": "Sprint across the canyon, double-jump over barriers and drones, and push your distance record.",
+    "controls": "Space, Up arrow, or Click/Tap to jump & double-jump",
+    "overview": "An endless high-speed side-scroller featuring double jumps, ground pillars, and aerial drones as speed climbs.",
+    "tips": [
+      "Save your second mid-air jump for wide obstacles or flying drones.",
+      "Land early after each jump to regain control before the next hazard."
+    ],
+    "thumbnail": "./assets/covers/dino-sprint.svg",
+    "iframeSrc": "./games/dino-sprint.html"
+  },
+  {
+    "id": "whack-critters",
+    "title": "Turbo Reflex Pop",
+    "category": "Arcade",
+    "difficulty": "Easy",
+    "estimatedTime": "1–3 min",
+    "players": "1 Player",
+    "description": "Test your reaction speed in a 30-second 4x4 target blitz—snag golden tiles and dodge red bombs.",
+    "overview": "Rapidly click cyan +10 and gold +30 targets on a 4x4 reaction board before they vanish while avoiding -25 bombs.",
+    "controls": "Click or tap glowing tiles",
+    "tips": [
+      "Keep your cursor centered on the 4x4 grid for shorter travel distances.",
+      "Prioritize golden +30 targets whenever two pop up together."
+    ],
+    "thumbnail": "./assets/covers/whack-critters.svg",
+    "iframeSrc": "./games/whack-critters.html"
+  },
+  {
+    "id": "tetris-blocks",
+    "title": "Block Drop",
+    "category": "Arcade",
+    "difficulty": "Medium",
+    "estimatedTime": "5–15 min",
+    "players": "1 Player",
+    "description": "Rotate and drop falling tetrominoes to clear horizontal lines and rack up multi-line combos.",
+    "overview": "Classic falling-block arcade action with all 7 tetromino shapes, hard drops, and escalating fall speeds.",
+    "controls": "Left/Right move · Up rotate · Down soft drop · Space hard drop",
+    "tips": [
+      "Keep a single column open on the edge for 4-line clears with the I-piece.",
+      "Avoid creating overhang gaps that block lower rows."
+    ],
+    "thumbnail": "./assets/covers/tetris-blocks.svg",
+    "iframeSrc": "./games/tetris-blocks.html"
+  },
+  {
+    "id": "pac-maze",
+    "title": "Pellet Dash",
+    "category": "Arcade",
+    "difficulty": "Medium",
+    "estimatedTime": "3–8 min",
+    "players": "1 Player",
+    "description": "Clear every pellet in the maze while outsmarting chasing guardians and grabbing power orbs.",
+    "overview": "Navigate a tight neon labyrinth, collect corner power orbs to turn the tables on chasers, and clear the board.",
+    "controls": "Arrow keys or WASD to steer",
+    "tips": [
+      "Save corner power orbs for moments when two chasers trap your lane.",
+      "Queue your next turn slightly before reaching an intersection."
+    ],
+    "thumbnail": "./assets/covers/pac-maze.svg",
+    "iframeSrc": "./games/pac-maze.html"
+  },
+  {
+    "id": "sudoku-mini",
+    "title": "Sudoku 9x9",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "8–20 min",
+    "players": "1 Player",
+    "description": "Fill every 9x9 row, column, and 3x3 box with digits 1–9 without repeating a number.",
+    "overview": "Generate fresh 9x9 Sudoku boards with instant mistake highlighting, keyboard digit entry, and on-screen number buttons.",
+    "controls": "Click a cell, then press 1–9 or click the number bar",
+    "tips": [
+      "Scan 3x3 boxes that already contain 5 or more numbers first.",
+      "Use Backspace or Clr to erase any mistyped digit."
+    ],
+    "thumbnail": "./assets/covers/sudoku-mini.svg",
+    "iframeSrc": "./games/sudoku-mini.html"
+  },
+  {
+    "id": "lights-out",
+    "title": "Circuit Lights Out",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "2–8 min",
+    "players": "1 Player",
+    "description": "Click tiles on a 5x5 grid to toggle adjacent bulbs until every single light is switched off.",
+    "overview": "Every tile flips itself and its four orthogonal neighbors—solve guaranteed-solvable 5x5 boards in minimal moves.",
+    "controls": "Click tiles on the 5x5 grid",
+    "tips": [
+      "Chase lights downward row by row by clicking directly below any lit tile.",
+      "Never click the same tile twice in a row—it cancels out."
+    ],
+    "thumbnail": "./assets/covers/lights-out.svg",
+    "iframeSrc": "./games/lights-out.html"
+  },
+  {
+    "id": "sliding-15",
+    "title": "15 Tile Shuffle",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "3–8 min",
+    "players": "1 Player",
+    "description": "Slide numbered tiles into the blank slot to arrange 1 through 15 in ascending order.",
+    "overview": "Guaranteed-solvable 4x4 sliding number puzzles highlighting tiles in green once they reach their home spot.",
+    "controls": "Click adjacent tiles or use Arrow keys",
+    "tips": [
+      "Solve the entire top row (1–4) and left column first, then never disturb them.",
+      "Arrow keys let you blitz through familiar sequences rapidly."
+    ],
+    "thumbnail": "./assets/covers/sliding-15.svg",
+    "iframeSrc": "./games/sliding-15.html"
+  },
+  {
+    "id": "word-guess",
+    "title": "Five-Letter Wordle",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "2–5 min",
+    "players": "1 Player",
+    "description": "Deduce the secret 5-letter word within 6 guesses using green and amber letter clues.",
+    "overview": "Unlimited 5-letter word puzzles with full physical and on-screen keyboard color tracking.",
+    "controls": "Type letters + Enter (or use on-screen keyboard)",
+    "tips": [
+      "Open with vowel-rich words like SPARK, TRAIL, or ORBIT.",
+      "Test unused common consonants on guess 2 to narrow possibilities fast."
+    ],
+    "thumbnail": "./assets/covers/word-guess.svg",
+    "iframeSrc": "./games/word-guess.html"
+  },
+  {
+    "id": "nonogram-grid",
+    "title": "Picross Nonogram",
+    "category": "Puzzle",
+    "difficulty": "Hard",
+    "estimatedTime": "4–10 min",
+    "players": "1 Player",
+    "description": "Use row and column run-length clues to uncover the hidden 6x6 pixel picture.",
+    "overview": "Deduce which squares are filled or empty using classic Picross number clues along every row and column.",
+    "controls": "Click to fill · Toggle Mode: Mark × to rule out empty cells",
+    "tips": [
+      "Start with clues that sum close to 6 (like 6, 5, or 2 3).",
+      "Switch to Mark × mode to cross off confirmed blank tiles."
+    ],
+    "thumbnail": "./assets/covers/nonogram-grid.svg",
+    "iframeSrc": "./games/nonogram-grid.html"
+  },
+  {
+    "id": "tower-hanoi",
+    "title": "Tower of Hanoi",
+    "category": "Puzzle",
+    "difficulty": "Easy",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Transfer the entire stacked disk pyramid to the rightmost peg without placing larger disks on smaller ones.",
+    "overview": "Test your recursive planning across 3, 4, or 5 disks and try to match the theoretical minimum move count.",
+    "controls": "Click source peg, then click destination peg",
+    "tips": [
+      "Move the smallest disk every other turn in a consistent cyclic direction.",
+      "Start on 3 Disks to learn the rhythm before stepping up to 5."
+    ],
+    "thumbnail": "./assets/covers/tower-hanoi.svg",
+    "iframeSrc": "./games/tower-hanoi.html"
+  },
+  {
+    "id": "simon-echo",
+    "title": "Chroma Sequence",
+    "category": "Puzzle",
+    "difficulty": "Easy",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Watch and listen as the four glowing pads flash longer melodic patterns each round.",
+    "overview": "A classic audio-visual memory challenge that tracks your longest streak across rounds.",
+    "controls": "Click or tap the 4 colored pads in order",
+    "tips": [
+      "Group patterns into chunks of 3 or 4 colors in your head as sequences grow.",
+      "Listen to each pad's pitch—auditory cues double your recall accuracy."
+    ],
+    "thumbnail": "./assets/covers/simon-echo.svg",
+    "iframeSrc": "./games/simon-echo.html"
+  },
+  {
+    "id": "pipe-connect",
+    "title": "Pipe Flow Link",
+    "category": "Puzzle",
+    "difficulty": "Medium",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Rotate elbow, straight, and tee pipes on a 5x5 grid to route water from start to finish.",
+    "overview": "Watch live blue water surge through connected segments in real time until the bottom-right drain fills.",
+    "controls": "Click any pipe tile to rotate it 90 degrees",
+    "tips": [
+      "Trace backward from the bottom-right amber drain when stuck near the middle.",
+      "Use tee junctions to bridge parallel lanes quickly."
+    ],
+    "thumbnail": "./assets/covers/pipe-connect.svg",
+    "iframeSrc": "./games/pipe-connect.html"
+  },
+  {
+    "id": "dodge-meteor",
+    "title": "Meteor Dodge",
+    "category": "Action",
+    "difficulty": "Medium",
+    "estimatedTime": "3–8 min",
+    "players": "1 Player",
+    "description": "Weave around crimson meteors coming from all edges while grabbing golden energy orbs.",
+    "overview": "High-speed 360-degree survival arena where meteor spawn rate and velocity climb with your score.",
+    "controls": "Mouse cursor or WASD / Arrow keys",
+    "tips": [
+      "Fly in wide figure-eights near the center rather than hugging corners.",
+      "Golden orbs award +25 points—grab them when a lane opens up."
+    ],
+    "thumbnail": "./assets/covers/dodge-meteor.svg",
+    "iframeSrc": "./games/dodge-meteor.html"
+  },
+  {
+    "id": "tank-duel",
+    "title": "Ricochet Tanks",
+    "category": "Action",
+    "difficulty": "Hard",
+    "estimatedTime": "4–12 min",
+    "players": "1 Player",
+    "description": "Battle rival tanks across cover walls and bank bouncing shells around corners to score eliminations.",
+    "overview": "Tactical top-down tank combat where every shell ricochets twice off arena walls and cover barriers.",
+    "controls": "WASD move · Mouse aim & Click fire",
+    "tips": [
+      "Bank shots off the top or bottom wall to hit enemies hiding behind center cover.",
+      "Watch out for your own ricochets bouncing back into your lane!"
+    ],
+    "thumbnail": "./assets/covers/tank-duel.svg",
+    "iframeSrc": "./games/tank-duel.html"
+  },
+  {
+    "id": "platform-dash",
+    "title": "Spike Dash",
+    "category": "Action",
+    "difficulty": "Hard",
+    "estimatedTime": "2–8 min",
+    "players": "1 Player",
+    "description": "Vault over neon spikes and climb elevated blocks with snappy double-jumps at rising speed.",
+    "overview": "Rhythm-fast side-scrolling obstacle dash with single and double spike hazards plus jumpable platforms.",
+    "controls": "Space, Up arrow, or Click/Tap to Jump & Double-Jump",
+    "tips": [
+      "Use single jumps on lone spikes so your air jump is ready for double spikes.",
+      "Land cleanly on top of blue blocks to stay above ground hazards."
+    ],
+    "thumbnail": "./assets/covers/platform-dash.svg",
+    "iframeSrc": "./games/platform-dash.html"
+  },
+  {
+    "id": "turret-defense",
+    "title": "Hex Base Defense",
+    "category": "Action",
+    "difficulty": "Easy",
+    "estimatedTime": "3–10 min",
+    "players": "1 Player",
+    "description": "Rotate your central laser turret 360 degrees to intercept incoming drone swarms before they breach.",
+    "overview": "Defend the core from 360-degree enemy waves with rapid auto-firing laser bolts.",
+    "controls": "Aim with Mouse or Touch · Turret auto-fires",
+    "tips": [
+      "Sweep continuously toward whichever edge has the closest red drone.",
+      "Lead fast drones slightly ahead of their trajectory."
+    ],
+    "thumbnail": "./assets/covers/turret-defense.svg",
+    "iframeSrc": "./games/turret-defense.html"
+  },
+  {
+    "id": "laser-snake",
+    "title": "Tron Light Cycle",
+    "category": "Action",
+    "difficulty": "Medium",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Outmaneuver a rival neon light cycle and trap them inside your glowing laser trail.",
+    "overview": "High-speed arcade trail duel—cut across your opponent's path and avoid walls or any light wall.",
+    "controls": "WASD or Arrow keys to steer",
+    "tips": [
+      "Claim the center early so you have room to box the AI into a corner.",
+      "Avoid tight parallel chases unless you have an open turn."
+    ],
+    "thumbnail": "./assets/covers/laser-snake.svg",
+    "iframeSrc": "./games/laser-snake.html"
+  },
+  {
+    "id": "fruit-slice",
+    "title": "Blade Slice",
+    "category": "Action",
+    "difficulty": "Easy",
+    "estimatedTime": "2–6 min",
+    "players": "1 Player",
+    "description": "Swipe across launching glowing orbs with your blade trail while dodging red bombs.",
+    "overview": "Fast mouse or touch slicing action—don't miss glowing targets or accidentally slice an X bomb.",
+    "controls": "Hold Click/Touch & swipe across targets",
+    "tips": [
+      "Wait until targets reach the top of their arc where they hang briefly.",
+      "Watch closely before swiping when a red X bomb launches alongside targets."
+    ],
+    "thumbnail": "./assets/covers/fruit-slice.svg",
+    "iframeSrc": "./games/fruit-slice.html"
+  },
+  {
+    "id": "dungeon-crawl",
+    "title": "Dungeon Dash",
+    "category": "Action",
+    "difficulty": "Medium",
+    "estimatedTime": "4–10 min",
+    "players": "1 Player",
+    "description": "Snag the golden key, evade chasing slimes, and reach the exit portal across procedural dungeon floors.",
+    "overview": "Grid-based dungeon crawler where every move advances pursuing slimes toward you.",
+    "controls": "WASD or Arrow keys to move",
+    "tips": [
+      "Lure slimes around stone pillars to open a clean path to the golden key.",
+      "Once you grab the key, the gray exit tile turns green—head straight there!"
+    ],
+    "thumbnail": "./assets/covers/dungeon-crawl.svg",
+    "iframeSrc": "./games/dungeon-crawl.html"
+  },
+  {
+    "id": "boss-bullet",
+    "title": "Starfighter Boss Rush",
+    "category": "Action",
+    "difficulty": "Hard",
+    "estimatedTime": "4–12 min",
+    "players": "1 Player",
+    "description": "Weave through multi-wave bullet fans and defeat escalating dreadnought bosses.",
+    "overview": "Vertical arcade boss-rush shooter where each defeated dreadnought unleashes a tougher boss phase.",
+    "controls": "WASD / Arrows or Mouse move · Auto-Fire",
+    "tips": [
+      "Stay near the bottom third of the screen so bullet fans spread wider and leave larger gaps.",
+      "Focus on dodging first—your twin bolts auto-fire continuously."
+    ],
+    "thumbnail": "./assets/covers/boss-bullet.svg",
+    "iframeSrc": "./games/boss-bullet.html"
+  },
+  {
+    "id": "duel-arena",
+    "title": "Neon Tank Clash 2P",
+    "category": "Multiplayer",
+    "difficulty": "Medium",
+    "estimatedTime": "3–10 min",
+    "players": "2 Players / vs Bot",
+    "description": "Face off in a ricochet-wall tank arena with a friend on one keyboard or battle an AI rival to 5 rounds.",
+    "overview": "Local 2-player top-down tank battle inside a glowing neon maze. Bounce shots off angled bumpers and steel barriers to outsmart Player 2 or switch to 1P vs Bot anytime.",
+    "controls": "P1: WASD + Space fire · P2: Arrows + Enter fire (or vs Bot)",
+    "tips": [
+      "Bank shots off side barriers to hit opponents hiding behind center walls.",
+      "Toggle vs Bot in the top bar whenever you want solo multiplayer practice."
+    ],
+    "thumbnail": "./assets/covers/duel-arena.svg",
+    "iframeSrc": "./games/duel-arena.html"
+  },
+  {
+    "id": "lightcycle-2p",
+    "title": "Cyber Cycle 2P",
+    "category": "Multiplayer",
+    "difficulty": "Medium",
+    "estimatedTime": "2–8 min",
+    "players": "2 Players / vs Bot",
+    "description": "Cut off your rival's neon light trail in high-speed 2-player head-to-head rounds or vs AI.",
+    "overview": "Twin neon bikes leave solid glowing trails across a dark cyber grid. Force your opponent to crash first in fast best-of-rounds matches.",
+    "controls": "P1: WASD steer · P2: Arrow keys steer",
+    "tips": [
+      "Claim the center lanes early so you have space to box in your rival.",
+      "Never double-back onto your own trail!"
+    ],
+    "thumbnail": "./assets/covers/lightcycle-2p.svg",
+    "iframeSrc": "./games/lightcycle-2p.html"
+  },
+  {
+    "id": "sumo-bump",
+    "title": "Sumo Ring Dash 2P",
+    "category": "Multiplayer",
+    "difficulty": "Easy",
+    "estimatedTime": "2–6 min",
+    "players": "2 Players / vs Bot",
+    "description": "Ram and dash your opponent out of a shrinking neon ring in physics-driven 2-player sumo rounds.",
+    "overview": "Build momentum and trigger timed dash bursts to knock your rival off the shrinking circular arena platform.",
+    "controls": "P1: WASD + Shift dash · P2: Arrows + / or Enter dash",
+    "tips": [
+      "Bait a rival dash near the edge, sidestep, and counter-ram from behind.",
+      "Watch the shrinking ring boundary as rounds drag on!"
+    ],
+    "thumbnail": "./assets/covers/sumo-bump.svg",
+    "iframeSrc": "./games/sumo-bump.html"
+  },
+  {
+    "id": "air-hockey-2p",
+    "title": "Pocket Air Hockey 2P",
+    "category": "Multiplayer",
+    "difficulty": "Easy",
+    "estimatedTime": "3–8 min",
+    "players": "2 Players / vs Bot",
+    "description": "Fast-paced glowing air hockey table with bank-shot physics for 2 local players or solo vs Bot.",
+    "overview": "Slide your striker across your half of the rink, smash the high-speed puck past your opponent's goal, and race to 7 points.",
+    "controls": "P1: WASD or Mouse · P2: Arrow keys (or vs Bot)",
+    "tips": [
+      "Angle your striker diagonally into incoming pucks for blistering bank shots.",
+      "Guard the center crease immediately after every kickoff."
+    ],
+    "thumbnail": "./assets/covers/air-hockey-2p.svg",
+    "iframeSrc": "./games/air-hockey-2p.html"
+  },
+  {
+    "id": "connect-four",
+    "title": "Connect Four 2P",
+    "category": "Multiplayer",
+    "difficulty": "Easy",
+    "estimatedTime": "2–6 min",
+    "players": "2 Players / vs Bot",
+    "description": "Drop amber and cyan discs into a 7x6 grid to line up four in a row against a friend or smart Bot.",
+    "overview": "Classic tactical disc-dropping duel with animated drops, winning line highlights, score tracking, and 2-player or vs-Bot modes.",
+    "controls": "Click any column (or press keys 1–7) to drop a disc",
+    "tips": [
+      "Control the middle column early to unlock diagonal and horizontal threats.",
+      "Set up two winning threats simultaneously so your opponent can only block one."
+    ],
+    "thumbnail": "./assets/covers/connect-four.svg",
+    "iframeSrc": "./games/connect-four.html"
+  },
+  {
+    "id": "tag-arena-2p",
+    "title": "Platform Star Duel 2P",
+    "category": "Multiplayer",
+    "difficulty": "Medium",
+    "estimatedTime": "2–5 min",
+    "players": "2 Players / vs Bot",
+    "description": "Race across floating platforms in a 45-second brawl to collect golden stars and zap your rival.",
+    "overview": "Side-view 2-player platformer arena where both fighters leap for falling stars and fire energy bolts to stun and steal points.",
+    "controls": "P1: A/D + W jump + F shoot · P2: Left/Right + Up + Enter shoot",
+    "tips": [
+      "Hold the top platform to spot new star spawns and drop down fast.",
+      "Landing a bolt temporarily stuns your rival and knocks loose bonus stars!"
+    ],
+    "thumbnail": "./assets/covers/tag-arena-2p.svg",
+    "iframeSrc": "./games/tag-arena-2p.html"
   }
 ]

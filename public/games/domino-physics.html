@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marble Track Maker</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .bar{width:100%;max-width:760px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px}
+  .row{display:flex;gap:6px;flex-wrap:wrap}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  button.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  canvas{flex:1;width:100%;max-width:760px;min-height:0;background:#0b1120;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:crosshair}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="row">
+      <button id="tool-ramp" class="active" type="button">Draw Ramp</button>
+      <button id="tool-bounce" type="button">Bumper Pad</button>
+      <button id="tool-marble" type="button">Drop Marble</button>
+    </div>
+    <div class="row">
+      <button id="rain-btn" type="button">Marble Rain</button>
+      <button id="clear-btn" type="button">Reset</button>
+    </div>
+  </div>
+  <canvas id="c" width="760" height="450"></canvas>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+let mode = 'ramp', segs = [{x1:90,y1:110,x2:320,y2:170,b:false},{x1:580,y1:210,x2:260,y2:280,b:false},{x1:140,y1:330,x2:480,y2:390,b:true}];
+let marbles = [{x:130,y:40,vx:0.5,vy:0,color:'#38bdf8'}], drag = null;
+const COLS = ['#38bdf8','#34d399','#f59e0b','#f472b6','#a78bfa'];
+
+function setMode(m, btnId) {
+  mode = m;
+  ['tool-ramp','tool-bounce','tool-marble'].forEach(id => document.getElementById(id).classList.toggle('active', id === btnId));
+}
+document.getElementById('tool-ramp').addEventListener('click', () => setMode('ramp', 'tool-ramp'));
+document.getElementById('tool-bounce').addEventListener('click', () => setMode('bounce', 'tool-bounce'));
+document.getElementById('tool-marble').addEventListener('click', () => setMode('marble', 'tool-marble'));
+
+function step() {
+  for (const m of marbles) {
+    m.vy += 0.24;
+    m.x += m.vx; m.y += m.vy;
+    for (const s of segs) {
+      const dx = s.x2 - s.x1, dy = s.y2 - s.y1, len2 = dx * dx + dy * dy;
+      if (len2 < 4) continue;
+      const t = Math.max(0, Math.min(1, ((m.x - s.x1) * dx + (m.y - s.y1) * dy) / len2));
+      const px = s.x1 + t * dx, py = s.y1 + t * dy;
+      const distX = m.x - px, distY = m.y - py, dist = Math.hypot(distX, distY);
+      if (dist < 10 && dist > 0.001) {
+        const nx = distX / dist, ny = distY / dist;
+        m.x = px + nx * 10; m.y = py + ny * 10;
+        const dot = m.vx * nx + m.vy * ny;
+        if (dot < 0) {
+          const rest = s.b ? 1.85 : 1.45;
+          m.vx -= rest * dot * nx;
+          m.vy -= rest * dot * ny;
+        }
+      }
+    }
+    if (m.x < 10) { m.x = 10; m.vx = Math.abs(m.vx); }
+    if (m.x > c.width - 10) { m.x = c.width - 10; m.vx = -Math.abs(m.vx); }
+  }
+  marbles = marbles.filter(m => m.y < c.height + 20);
+}
+
+function draw() {
+  step();
+  ctx.fillStyle = 'rgba(11,17,32,0.45)';
+  ctx.fillRect(0, 0, c.width, c.height);
+  for (const s of segs) {
+    ctx.strokeStyle = s.b ? '#10b981' : '#94a3b8';
+    ctx.lineWidth = s.b ? 7 : 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+  }
+  if (drag) {
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(drag.x1, drag.y1); ctx.lineTo(drag.x2, drag.y2); ctx.stroke();
+  }
+  for (const m of marbles) {
+    ctx.fillStyle = m.color;
+    ctx.beginPath(); ctx.arc(m.x, m.y, 8, 0, Math.PI * 2); ctx.fill();
+  }
+  requestAnimationFrame(draw);
+}
+
+function pt(e) { const r = c.getBoundingClientRect(); return { x: ((e.clientX - r.left)/r.width)*c.width, y: ((e.clientY - r.top)/r.height)*c.height }; }
+c.addEventListener('pointerdown', (e) => {
+  const p = pt(e);
+  if (mode === 'marble') { marbles.push({ x: p.x, y: p.y, vx: (Math.random()-0.5)*2, vy: 0, color: COLS[marbles.length % COLS.length] }); return; }
+  drag = { x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+});
+c.addEventListener('pointermove', (e) => { if (drag) { const p = pt(e); drag.x2 = p.x; drag.y2 = p.y; } });
+window.addEventListener('pointerup', () => {
+  if (drag) { if (Math.hypot(drag.x2 - drag.x1, drag.y2 - drag.y1) > 10) segs.push({ ...drag, b: mode === 'bounce' }); drag = null; }
+});
+document.getElementById('rain-btn').addEventListener('click', () => {
+  for (let i = 0; i < 6; i++) marbles.push({ x: 80 + Math.random()*600, y: 20 + i*6, vx: (Math.random()-0.5)*2, vy: 0, color: COLS[(marbles.length+i)%COLS.length] });
+});
+document.getElementById('clear-btn').addEventListener('click', () => { segs = []; marbles = []; });
+draw();
+</script>
+</body>
+</html>

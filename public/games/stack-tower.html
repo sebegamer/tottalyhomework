@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Skyline Stacker</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:520px;display:flex;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:520px;min-height:0}
+  canvas{width:100%;height:100%;background:#080e1c;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer}
+  .ov{position:absolute;inset:0;background:rgba(8,14,28,.82);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Floors: <strong id="sc">0</strong></span><span>Best: <strong id="best">0</strong></span></div>
+  <div class="stage">
+    <canvas id="c" width="520" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Skyline Stacker</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Click or press Space right when the moving beam aligns with the tower below.</p>
+      <button id="go" type="button">Start Building</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const KEY = 'th_stack_best'; let best = Number(localStorage.getItem(KEY) || 0);
+document.getElementById('best').textContent = best;
+let stack = [], active = null, score = 0, state = 'MENU', camY = 0;
+const COLORS = ['#f59e0b','#fb923c','#f43f5e','#ec4899','#a855f7','#6366f1','#38bdf8','#34d399'];
+
+function start() {
+  stack = [{ x: 160, w: 200, y: 400, color: COLORS[0] }];
+  score = 0; camY = 0; document.getElementById('sc').textContent = 0;
+  spawnNext(); state = 'PLAY'; ov.hidden = true;
+}
+function spawnNext() {
+  const top = stack[stack.length - 1];
+  active = { x: 20, w: top.w, y: top.y - 26, vx: 3.3 + Math.min(5, score * 0.22), color: COLORS[stack.length % COLORS.length] };
+}
+function drop() {
+  if (state !== 'PLAY' || !active) return;
+  const top = stack[stack.length - 1];
+  const left = Math.max(top.x, active.x);
+  const right = Math.min(top.x + top.w, active.x + active.w);
+  const overlap = right - left;
+  if (overlap <= 2) {
+    state = 'OVER';
+    document.getElementById('ov-t').textContent = 'Tower Collapsed!';
+    document.getElementById('ov-p').textContent = `You stacked ${score} floors.`;
+    document.getElementById('go').textContent = 'Play Again';
+    ov.hidden = false;
+    return;
+  }
+  const snapPerfect = Math.abs(active.x - top.x) < 5;
+  stack.push({ x: snapPerfect ? top.x : left, w: snapPerfect ? top.w : overlap, y: active.y, color: active.color });
+  score++; document.getElementById('sc').textContent = score;
+  if (score > best) { best = score; document.getElementById('best').textContent = best; localStorage.setItem(KEY, best); }
+  if (active.y - camY < 160) camY -= 26;
+  spawnNext();
+}
+function loop() {
+  if (state === 'PLAY' && active) {
+    active.x += active.vx;
+    if (active.x < 10 || active.x + active.w > c.width - 10) active.vx *= -1;
+  }
+  ctx.fillStyle = '#080e1c'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.save(); ctx.translate(0, -camY);
+  stack.forEach(b => { ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, 24); });
+  if (active && state === 'PLAY') { ctx.fillStyle = active.color; ctx.fillRect(active.x, active.y, active.w, 24); }
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+document.getElementById('go').addEventListener('click', start);
+c.addEventListener('pointerdown', drop);
+document.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); if (state === 'PLAY') drop(); else start(); } });
+loop();
+</script>
+</body>
+</html>

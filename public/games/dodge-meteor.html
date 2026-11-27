@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meteor Dodge</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:720px;display:flex;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:720px;min-height:0}
+  canvas{width:100%;height:100%;background:#060a14;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:none}
+  .ov{position:absolute;inset:0;background:rgba(6,10,20,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Score: <strong id="sc">0</strong> · Best: <strong id="best">0</strong></span><span>WASD / Arrows or Mouse to dodge</span></div>
+  <div class="stage">
+    <canvas id="c" width="720" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Meteor Dodge</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Steer your craft to dodge crimson meteors and grab golden energy orbs.</p>
+      <button id="go" type="button">Launch</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const KEY = 'th_meteor_best'; let best = Number(localStorage.getItem(KEY) || 0);
+document.getElementById('best').textContent = best;
+let px = 360, py = 220, score = 0, rocks = [], orbs = [], state = 'MENU', tick = 0;
+const keys = {};
+
+function start() {
+  px = 360; py = 220; score = 0; rocks = []; orbs = [{x: 180, y: 140}]; tick = 0;
+  document.getElementById('sc').textContent = 0; state = 'PLAY'; ov.hidden = true;
+}
+function spawnRock() {
+  const side = Math.floor(Math.random() * 4);
+  let x = side === 1 ? c.width + 20 : side === 3 ? -20 : Math.random() * c.width;
+  let y = side === 0 ? -20 : side === 2 ? c.height + 20 : Math.random() * c.height;
+  const ang = Math.atan2(py - y, px - x) + (Math.random() - 0.5) * 0.45;
+  const spd = 2.6 + Math.min(4.2, score / 200);
+  rocks.push({ x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: 9 + Math.random() * 9 });
+}
+function loop() {
+  if (state === 'PLAY') {
+    tick++;
+    if (keys['arrowleft'] || keys['a']) px -= 5.2;
+    if (keys['arrowright'] || keys['d']) px += 5.2;
+    if (keys['arrowup'] || keys['w']) py -= 5.2;
+    if (keys['arrowdown'] || keys['s']) py += 5.2;
+    px = Math.max(14, Math.min(c.width - 14, px));
+    py = Math.max(14, Math.min(c.height - 14, py));
+    if (tick % 6 === 0) {
+      score++; document.getElementById('sc').textContent = score;
+      if (score > best) { best = score; document.getElementById('best').textContent = best; localStorage.setItem(KEY, best); }
+    }
+    if (tick % Math.max(14, 34 - Math.floor(score / 40)) === 0) spawnRock();
+    rocks.forEach(r => { r.x += r.vx; r.y += r.vy; });
+    rocks = rocks.filter(r => r.x > -40 && r.x < c.width + 40 && r.y > -40 && r.y < c.height + 40);
+    for (let i = orbs.length - 1; i >= 0; i--) {
+      if (Math.hypot(orbs[i].x - px, orbs[i].y - py) < 22) {
+        score += 25; document.getElementById('sc').textContent = score;
+        orbs[i] = { x: 40 + Math.random() * (c.width - 80), y: 40 + Math.random() * (c.height - 80) };
+      }
+    }
+    if (rocks.some(r => Math.hypot(r.x - px, r.y - py) < r.r + 10)) {
+      state = 'OVER';
+      document.getElementById('ov-t').textContent = 'Hull Breached!';
+      document.getElementById('ov-p').textContent = `Score: ${score}`;
+      document.getElementById('go').textContent = 'Play Again';
+      ov.hidden = false;
+    }
+  }
+  ctx.fillStyle = '#060a14'; ctx.fillRect(0, 0, c.width, c.height);
+  orbs.forEach(o => { ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(o.x, o.y, 9, 0, Math.PI * 2); ctx.fill(); });
+  rocks.forEach(r => { ctx.fillStyle = '#f43f5e'; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(px, py, 11, 0, Math.PI * 2); ctx.fill();
+  requestAnimationFrame(loop);
+}
+c.addEventListener('pointermove', (e) => {
+  if (state !== 'PLAY') return;
+  const r = c.getBoundingClientRect();
+  px = ((e.clientX - r.left) / r.width) * c.width;
+  py = ((e.clientY - r.top) / r.height) * c.height;
+});
+document.getElementById('go').addEventListener('click', start);
+document.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+loop();
+</script>
+</body>
+</html>

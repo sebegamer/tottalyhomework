@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pixel Sprite Studio</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .bar{width:100%;max-width:720px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px}
+  .swatches{display:flex;gap:5px;flex-wrap:wrap}
+  .sw{width:24px;height:24px;border-radius:6px;border:2px solid rgba(255,255,255,.2);cursor:pointer;padding:0}
+  .sw.active{border-color:#fff;transform:scale(1.12)}
+  button.btn{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  button.btn.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;min-height:0;width:100%}
+  canvas#c{max-height:100%;max-width:440px;aspect-ratio:1/1;background:#0f172a;border:1px solid rgba(255,255,255,.14);border-radius:10px;cursor:crosshair}
+  .side{display:flex;flex-direction:column;align-items:center;gap:8px;background:#131d31;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);font-size:12px}
+  canvas#prev{background:#09101d;border-radius:6px;border:1px solid rgba(255,255,255,.12);image-rendering:pixelated}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="swatches" id="swatches"></div>
+    <div class="swatches">
+      <button class="btn" id="mirror-btn" type="button">Mirror: Off</button>
+      <button class="btn" id="fill-btn" type="button">Fill: Off</button>
+      <button class="btn" id="erase-btn" type="button">Eraser</button>
+      <button class="btn" id="clear-btn" type="button">Clear</button>
+    </div>
+  </div>
+  <div class="stage">
+    <canvas id="c" width="384" height="384"></canvas>
+    <div class="side">
+      <span>16×16 Preview</span>
+      <canvas id="prev" width="64" height="64"></canvas>
+    </div>
+  </div>
+</div>
+<script>
+const N = 16, c = document.getElementById('c'), ctx = c.getContext('2d'), prev = document.getElementById('prev').getContext('2d');
+const SZ = c.width / N;
+const COLORS = ['#f8fafc','#94a3b8','#ef4444','#f59e0b','#fde047','#22c55e','#14b8a6','#38bdf8','#6366f1','#a855f7','#ec4899','#78350f'];
+let pixels = Array.from({ length: N }, () => Array(N).fill(''));
+let color = COLORS[3], mirror = false, fillMode = false, erasing = false, down = false;
+
+const swEl = document.getElementById('swatches');
+COLORS.forEach((col) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'sw' + (col === color ? ' active' : '');
+  b.style.background = col;
+  b.addEventListener('click', () => {
+    color = col; erasing = false;
+    document.getElementById('erase-btn').classList.remove('active');
+    Array.from(swEl.children).forEach((el, i) => el.classList.toggle('active', COLORS[i] === color));
+  });
+  swEl.appendChild(b);
+});
+
+function flood(x, y, target, rep) {
+  if (target === rep) return;
+  const q = [[x, y]];
+  while (q.length) {
+    const [cx, cy] = q.pop();
+    if (cx < 0 || cx >= N || cy < 0 || cy >= N || pixels[cy][cx] !== target) continue;
+    pixels[cy][cx] = rep;
+    q.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, c.width, c.height);
+  prev.clearRect(0, 0, 64, 64);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      ctx.fillStyle = (x + y) % 2 === 0 ? '#0f172a' : '#131d31';
+      ctx.fillRect(x * SZ, y * SZ, SZ, SZ);
+      if (pixels[y][x]) {
+        ctx.fillStyle = pixels[y][x];
+        ctx.fillRect(x * SZ, y * SZ, SZ, SZ);
+        prev.fillStyle = pixels[y][x];
+        prev.fillRect(x * 4, y * 4, 4, 4);
+      }
+    }
+  }
+}
+
+function applyAt(e) {
+  const r = c.getBoundingClientRect();
+  const x = Math.floor(((e.clientX - r.left) / r.width) * N);
+  const y = Math.floor(((e.clientY - r.top) / r.height) * N);
+  if (x < 0 || x >= N || y < 0 || y >= N) return;
+  const val = erasing ? '' : color;
+  if (fillMode) { flood(x, y, pixels[y][x], val); }
+  else {
+    pixels[y][x] = val;
+    if (mirror) pixels[y][N - 1 - x] = val;
+  }
+  draw();
+}
+
+c.addEventListener('pointerdown', (e) => { down = true; applyAt(e); });
+window.addEventListener('pointerup', () => { down = false; });
+c.addEventListener('pointermove', (e) => { if (down && !fillMode) applyAt(e); });
+document.getElementById('mirror-btn').addEventListener('click', (e) => { mirror = !mirror; e.target.textContent = mirror ? 'Mirror: On' : 'Mirror: Off'; e.target.classList.toggle('active', mirror); });
+document.getElementById('fill-btn').addEventListener('click', (e) => { fillMode = !fillMode; e.target.textContent = fillMode ? 'Fill: On' : 'Fill: Off'; e.target.classList.toggle('active', fillMode); });
+document.getElementById('erase-btn').addEventListener('click', (e) => { erasing = !erasing; e.target.classList.toggle('active', erasing); });
+document.getElementById('clear-btn').addEventListener('click', () => { pixels = Array.from({ length: N }, () => Array(N).fill('')); draw(); });
+draw();
+</script>
+</body>
+</html>

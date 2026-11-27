@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voxel Block Builder</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .bar{width:100%;max-width:760px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px}
+  .tools{display:flex;flex-wrap:wrap;gap:6px}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  button.active{border-color:#f59e0b;background:#f59e0b;color:#0f172a}
+  canvas{flex:1;width:100%;max-width:760px;min-height:0;border-radius:10px;border:1px solid rgba(255,255,255,.12);cursor:crosshair}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="tools" id="palette"></div>
+    <div class="tools">
+      <button id="sky-btn" type="button">Sky: Night</button>
+      <button id="reset-btn" type="button">New Terrain</button>
+      <button id="clear-btn" type="button">Clear</button>
+    </div>
+  </div>
+  <canvas id="c" width="720" height="450"></canvas>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const COLS = 32, ROWS = 20, SZ = canvas.width / COLS;
+const BLOCKS = [
+  { id: 1, name: 'Grass', color: '#22c55e', top: '#4ade80' },
+  { id: 2, name: 'Dirt', color: '#78350f', top: '#92400e' },
+  { id: 3, name: 'Stone', color: '#64748b', top: '#94a3b8' },
+  { id: 4, name: 'Wood', color: '#a16207', top: '#ca8a04' },
+  { id: 5, name: 'Brick', color: '#dc2626', top: '#ef4444' },
+  { id: 6, name: 'Water', color: 'rgba(56,189,248,0.72)', top: '#7dd3fc' },
+  { id: 7, name: 'Torch', color: '#f59e0b', top: '#fde047' },
+  { id: 0, name: 'Erase', color: '#0f172a', top: '#1e293b' },
+];
+let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+let selected = 1;
+let night = true;
+let drawing = false;
+let erasing = false;
+
+function genTerrain() {
+  grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  let h = 12;
+  for (let x = 0; x < COLS; x++) {
+    h = Math.max(8, Math.min(15, h + (Math.random() < 0.35 ? (Math.random() < 0.5 ? -1 : 1) : 0)));
+    for (let y = h; y < ROWS; y++) {
+      grid[y][x] = y === h ? 1 : y < h + 3 ? 2 : 3;
+    }
+  }
+  draw();
+}
+
+const pal = document.getElementById('palette');
+BLOCKS.forEach((b) => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = b.name;
+  if (b.id === selected) btn.classList.add('active');
+  btn.addEventListener('click', () => {
+    selected = b.id;
+    Array.from(pal.children).forEach((el, idx) => el.classList.toggle('active', BLOCKS[idx].id === selected));
+  });
+  pal.appendChild(btn);
+});
+
+function draw() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, night ? '#081024' : '#38bdf8');
+  grad.addColorStop(1, night ? '#111c3a' : '#bae6fd');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const id = grid[y][x];
+      if (!id) {
+        ctx.strokeStyle = night ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.06)';
+        ctx.strokeRect(x * SZ, y * SZ, SZ, SZ);
+        continue;
+      }
+      const b = BLOCKS.find((it) => it.id === id);
+      const px = x * SZ, py = y * SZ;
+      if (id === 7) {
+        ctx.fillStyle = 'rgba(250,204,21,0.22)';
+        ctx.beginPath(); ctx.arc(px + SZ / 2, py + SZ / 2, SZ * 1.1, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px + SZ * 0.4, py + SZ * 0.35, SZ * 0.2, SZ * 0.65);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(px + SZ * 0.34, py + SZ * 0.14, SZ * 0.32, SZ * 0.26);
+      } else {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(px, py, SZ, SZ);
+        ctx.fillStyle = b.top;
+        ctx.fillRect(px, py, SZ, 4);
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.strokeRect(px, py, SZ, SZ);
+      }
+    }
+  }
+}
+
+function paintAt(clientX, clientY, forceErase) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor(((clientX - rect.left) / rect.width) * COLS);
+  const y = Math.floor(((clientY - rect.top) / rect.height) * ROWS);
+  if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+    grid[y][x] = forceErase ? 0 : selected;
+    draw();
+  }
+}
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('pointerdown', (e) => {
+  drawing = true;
+  erasing = e.button === 2;
+  paintAt(e.clientX, e.clientY, erasing);
+});
+window.addEventListener('pointerup', () => { drawing = false; erasing = false; });
+canvas.addEventListener('pointermove', (e) => { if (drawing) paintAt(e.clientX, e.clientY, erasing); });
+
+document.getElementById('sky-btn').addEventListener('click', (e) => {
+  night = !night;
+  e.target.textContent = night ? 'Sky: Night' : 'Sky: Day';
+  draw();
+});
+document.getElementById('reset-btn').addEventListener('click', genTerrain);
+document.getElementById('clear-btn').addEventListener('click', () => {
+  grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  draw();
+});
+
+genTerrain();
+</script>
+</body>
+</html>

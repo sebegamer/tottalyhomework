@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sky Hopper</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:640px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:640px;min-height:0;display:flex;justify-content:center}
+  canvas{height:100%;width:100%;background:linear-gradient(#0b1730,#070d1a);border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer}
+  .ov{position:absolute;inset:0;background:rgba(7,12,24,.82);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Score: <strong id="sc">0</strong></span><span>Best: <strong id="best">0</strong></span></div>
+  <div class="stage">
+    <canvas id="c" width="640" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Sky Hopper</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Press Space, Up, or Click to boost through the glowing skyline gaps.</p>
+      <button id="go" type="button">Launch</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const scEl = document.getElementById('sc'), bestEl = document.getElementById('best'), ov = document.getElementById('ov');
+const KEY = 'th_sky_hopper_best';
+let best = Number(localStorage.getItem(KEY) || 0); bestEl.textContent = best;
+let state = 'MENU', y = 220, vy = 0, pipes = [], score = 0, tick = 0;
+
+function reset() {
+  y = 220; vy = 0; pipes = []; score = 0; tick = 0;
+  scEl.textContent = '0'; state = 'PLAY'; ov.hidden = true;
+}
+function flap() {
+  if (state === 'MENU') { reset(); }
+  if (state === 'PLAY') vy = -6.4;
+}
+function loop() {
+  if (state === 'PLAY') {
+    tick++;
+    vy += 0.34; y += vy;
+    if (tick % 85 === 0) {
+      const gap = 128, top = 50 + Math.random() * (c.height - gap - 100);
+      pipes.push({ x: c.width + 20, top, gap, scored: false });
+    }
+    pipes.forEach(p => { p.x -= 3.2; });
+    pipes = pipes.filter(p => p.x > -70);
+    for (const p of pipes) {
+      if (!p.scored && p.x + 26 < 140) {
+        p.scored = true; score++; scEl.textContent = score;
+        if (score > best) { best = score; bestEl.textContent = best; localStorage.setItem(KEY, best); }
+      }
+      if (140 + 13 > p.x && 140 - 13 < p.x + 52) {
+        if (y - 13 < p.top || y + 13 > p.top + p.gap) die();
+      }
+    }
+    if (y < 14 || y > c.height - 14) die();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+function die() {
+  state = 'OVER';
+  document.getElementById('ov-t').textContent = 'Crashed!';
+  document.getElementById('ov-p').textContent = `Score: ${score}. Tap Launch to fly again.`;
+  document.getElementById('go').textContent = 'Play Again';
+  ov.hidden = false;
+}
+function draw() {
+  ctx.clearRect(0, 0, c.width, c.height);
+  for (const p of pipes) {
+    ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.fillRect(p.x, 0, 52, p.top); ctx.strokeRect(p.x, 0, 52, p.top);
+    ctx.fillRect(p.x, p.top + p.gap, 52, c.height - p.top - p.gap);
+    ctx.strokeRect(p.x, p.top + p.gap, 52, c.height - p.top - p.gap);
+  }
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath(); ctx.arc(140, y, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fde047';
+  ctx.beginPath(); ctx.arc(145, y - 3, 4, 0, Math.PI * 2); ctx.fill();
+}
+document.getElementById('go').addEventListener('click', reset);
+c.addEventListener('pointerdown', flap);
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w') { e.preventDefault(); flap(); }
+});
+loop();
+</script>
+</body>
+</html>

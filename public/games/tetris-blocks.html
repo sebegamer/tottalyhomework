@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Block Drop</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:420px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:13px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;min-height:0;display:flex;justify-content:center}
+  canvas{height:100%;aspect-ratio:10/20;background:#070c17;border:1px solid rgba(255,255,255,.14);border-radius:10px}
+  .ov{position:absolute;inset:0;background:rgba(7,12,23,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:9px 20px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Score: <strong id="sc">0</strong> · Lines: <strong id="ln">0</strong></span><span>Arrows Move/Rotate · Space Drop</span></div>
+  <div class="stage">
+    <canvas id="c" width="240" height="480"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Block Drop</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Left/Right move, Up rotates, Down soft drops, Space hard drops.</p>
+      <button id="go" type="button">Start</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const W = 10, H = 20, SZ = 24;
+const SHAPES = [
+  [[1,1,1,1]], [[1,1],[1,1]], [[0,1,0],[1,1,1]], [[1,0,0],[1,1,1]],
+  [[0,0,1],[1,1,1]], [[0,1,1],[1,1,0]], [[1,1,0],[0,1,1]]
+];
+const COLS = ['#38bdf8','#f59e0b','#a855f7','#3b82f6','#fb923c','#22c55e','#f43f5e'];
+let board = [], cur = null, score = 0, lines = 0, state = 'MENU', last = 0, acc = 0;
+
+function spawn() {
+  const id = Math.floor(Math.random() * SHAPES.length);
+  cur = { m: SHAPES[id].map(r => [...r]), color: COLS[id], x: 3, y: 0 };
+  if (hit(cur.x, cur.y, cur.m)) {
+    state = 'OVER';
+    document.getElementById('ov-t').textContent = 'Game Over';
+    document.getElementById('ov-p').textContent = `Score: ${score} · Lines: ${lines}`;
+    ov.hidden = false;
+  }
+}
+function hit(nx, ny, m) {
+  for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++) {
+    if (!m[y][x]) continue;
+    const bx = nx + x, by = ny + y;
+    if (bx < 0 || bx >= W || by >= H || (by >= 0 && board[by][bx])) return true;
+  }
+  return false;
+}
+function lock() {
+  cur.m.forEach((r, y) => r.forEach((v, x) => { if (v && cur.y + y >= 0) board[cur.y + y][cur.x + x] = cur.color; }));
+  let cleared = 0;
+  for (let y = H - 1; y >= 0; y--) {
+    if (board[y].every(Boolean)) { board.splice(y, 1); board.unshift(Array(W).fill('')); cleared++; y++; }
+  }
+  if (cleared) {
+    lines += cleared; score += [0, 100, 300, 500, 800][cleared];
+    document.getElementById('sc').textContent = score; document.getElementById('ln').textContent = lines;
+  }
+  spawn();
+}
+function rotate() {
+  const rot = cur.m[0].map((_, i) => cur.m.map(r => r[i]).reverse());
+  if (!hit(cur.x, cur.y, rot)) cur.m = rot;
+}
+function start() {
+  board = Array.from({ length: H }, () => Array(W).fill(''));
+  score = 0; lines = 0; document.getElementById('sc').textContent = 0; document.getElementById('ln').textContent = 0;
+  state = 'PLAY'; ov.hidden = true; spawn();
+}
+function draw(t = 0) {
+  const dt = t - last; last = t;
+  if (state === 'PLAY') {
+    acc += dt;
+    if (acc > Math.max(150, 520 - lines * 12)) {
+      acc = 0;
+      if (!hit(cur.x, cur.y + 1, cur.m)) cur.y++; else lock();
+    }
+  }
+  ctx.fillStyle = '#070c17'; ctx.fillRect(0, 0, c.width, c.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (board[y]?.[x]) { ctx.fillStyle = board[y][x]; ctx.fillRect(x * SZ + 1, y * SZ + 1, SZ - 2, SZ - 2); }
+  }
+  if (cur && state === 'PLAY') {
+    ctx.fillStyle = cur.color;
+    cur.m.forEach((r, y) => r.forEach((v, x) => { if (v) ctx.fillRect((cur.x + x) * SZ + 1, (cur.y + y) * SZ + 1, SZ - 2, SZ - 2); }));
+  }
+  requestAnimationFrame(draw);
+}
+document.getElementById('go').addEventListener('click', start);
+document.addEventListener('keydown', (e) => {
+  if (state !== 'PLAY') return;
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+  if (e.key === 'ArrowLeft' && !hit(cur.x - 1, cur.y, cur.m)) cur.x--;
+  if (e.key === 'ArrowRight' && !hit(cur.x + 1, cur.y, cur.m)) cur.x++;
+  if (e.key === 'ArrowUp') rotate();
+  if (e.key === 'ArrowDown' && !hit(cur.x, cur.y + 1, cur.m)) cur.y++;
+  if (e.key === ' ') { while (!hit(cur.x, cur.y + 1, cur.m)) cur.y++; lock(); }
+});
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sumo Ring Dash 2P</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 100%; height: 100%; overflow: hidden;
+        background: #060912; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .hud {
+        width: min(680px, 95vw); display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 8px 12px; margin-bottom: 8px;
+        background: #0f1628; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+      }
+      .p1 { color: #38bdf8; } .p2 { color: #fb923c; }
+      button {
+        background: #1a233a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+      }
+      button.active { background: #f59e0b; color: #07090e; border-color: #f59e0b; }
+      canvas {
+        width: min(680px, 95vw); height: min(460px, 76vh);
+        background: #080c17; border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
+      }
+      .tip { margin-top: 6px; font-size: 12px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span class="p1">P1: <span id="s1">0</span></span>
+      <span id="msg">Knock your opponent out of the ring!</span>
+      <span class="p2">P2: <span id="s2">0</span></span>
+      <div>
+        <button id="modeBtn" type="button">Mode: 2P Local</button>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+    <canvas id="c" width="680" height="460"></canvas>
+    <div class="tip">P1: WASD + Space Dash · P2: Arrows + Enter Dash</div>
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const s1El = document.getElementById('s1');
+      const s2El = document.getElementById('s2');
+      const msgEl = document.getElementById('msg');
+      const modeBtn = document.getElementById('modeBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      const keys = new Set();
+      let vsCpu = false, ringRadius = 198, pause = 0;
+      let scores = [0, 0];
+      const cx = canvas.width / 2, cy = canvas.height / 2;
+
+      const p1 = { x: cx - 80, y: cy, vx: 0, vy: 0, dashCd: 0, color: '#38bdf8' };
+      const p2 = { x: cx + 80, y: cy, vx: 0, vy: 0, dashCd: 0, color: '#fb923c' };
+
+      function resetRound() {
+        p1.x = cx - 80; p1.y = cy; p1.vx = 0; p1.vy = 0; p1.dashCd = 0;
+        p2.x = cx + 80; p2.y = cy; p2.vx = 0; p2.vy = 0; p2.dashCd = 0;
+        ringRadius = 198;
+      }
+
+      modeBtn.addEventListener('click', () => {
+        vsCpu = !vsCpu;
+        modeBtn.textContent = vsCpu ? 'Mode: vs Bot' : 'Mode: 2P Local';
+        modeBtn.classList.toggle('active', vsCpu);
+        scores = [0, 0]; s1El.textContent = '0'; s2El.textContent = '0';
+        resetRound();
+      });
+      resetBtn.addEventListener('click', () => {
+        scores = [0, 0]; s1El.textContent = '0'; s2El.textContent = '0';
+        resetRound();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter'].includes(e.code)) e.preventDefault();
+        keys.add(e.code);
+      });
+      window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+      function drive(p, ax, ay, dash) {
+        if (p.dashCd > 0) p.dashCd--;
+        const len = Math.hypot(ax, ay);
+        if (len > 0) {
+          const nx = ax / len, ny = ay / len;
+          const force = dash && p.dashCd === 0 ? 7.5 : 0.48;
+          if (dash && p.dashCd === 0) p.dashCd = 45;
+          p.vx += nx * force;
+          p.vy += ny * force;
+        }
+        p.vx *= 0.91;
+        p.vy *= 0.91;
+        p.x += p.vx;
+        p.y += p.vy;
+      }
+
+      function update() {
+        if (pause > 0) {
+          pause--;
+          if (pause === 0) resetRound();
+          return;
+        }
+        ringRadius = Math.max(95, ringRadius - 0.08);
+
+        const a1x = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
+        const a1y = (keys.has('KeyS') ? 1 : 0) - (keys.has('KeyW') ? 1 : 0);
+        drive(p1, a1x, a1y, keys.has('Space'));
+
+        if (vsCpu) {
+          const dx = p1.x - p2.x, dy = p1.y - p2.y;
+          const distFromCenter = Math.hypot(p2.x - cx, p2.y - cy);
+          let ax = dx, ay = dy;
+          if (distFromCenter > ringRadius - 35) {
+            ax = cx - p2.x; ay = cy - p2.y;
+          }
+          drive(p2, ax, ay, Math.hypot(dx, dy) < 85);
+        } else {
+          const a2x = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+          const a2y = (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0);
+          drive(p2, a2x, a2y, keys.has('Enter'));
+        }
+
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 44 && dist > 0.01) {
+          const nx = dx / dist, ny = dy / dist;
+          const overlap = 44 - dist;
+          p1.x -= nx * overlap * 0.5; p1.y -= ny * overlap * 0.5;
+          p2.x += nx * overlap * 0.5; p2.y += ny * overlap * 0.5;
+          const relVx = p1.vx - p2.vx, relVy = p1.vy - p2.vy;
+          const impact = Math.max(2.6, Math.abs(relVx * nx + relVy * ny) * 1.45);
+          p1.vx -= nx * impact; p1.vy -= ny * impact;
+          p2.vx += nx * impact; p2.vy += ny * impact;
+        }
+
+        const out1 = Math.hypot(p1.x - cx, p1.y - cy) > ringRadius;
+        const out2 = Math.hypot(p2.x - cx, p2.y - cy) > ringRadius;
+        if (out1 || out2) {
+          if (out1 && !out2) {
+            scores[1]++; s2El.textContent = String(scores[1]);
+            msgEl.textContent = 'P2 Knocked P1 Out!';
+          } else if (out2 && !out1) {
+            scores[0]++; s1El.textContent = String(scores[0]);
+            msgEl.textContent = 'P1 Knocked P2 Out!';
+          } else {
+            msgEl.textContent = 'Ring Out Tie!';
+          }
+          pause = 40;
+        }
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#11192e';
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = ringRadius < 130 ? '#ef4444' : '#f59e0b';
+        ctx.stroke();
+
+        for (const p of [p1, p2]) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = p.dashCd === 0 ? '#ffffff' : 'rgba(255,255,255,0.25)';
+          ctx.stroke();
+        }
+      }
+
+      function loop() {
+        update();
+        render();
+        requestAnimationFrame(loop);
+      }
+      resetRound();
+      loop();
+    </script>
+  </body>
+</html>

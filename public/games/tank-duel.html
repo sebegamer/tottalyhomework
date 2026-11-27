@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ricochet Tanks</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:720px;display:flex;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:720px;min-height:0}
+  canvas{width:100%;height:100%;background:#0a1224;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:crosshair}
+  .ov{position:absolute;inset:0;background:rgba(10,18,36,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Wins: <strong id="sc">0</strong> · Enemy Tanks: <strong id="en">0</strong></span><span>WASD Move · Mouse Aim & Click Fire</span></div>
+  <div class="stage">
+    <canvas id="c" width="720" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Ricochet Tanks</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Drive with WASD, aim with the mouse, and bounce shells off arena walls to hit rival tanks.</p>
+      <button id="go" type="button">Deploy Tank</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const WALLS = [{x:210,y:110,w:24,h:220},{x:486,y:110,w:24,h:220},{x:310,y:206,w:100,h:28}];
+let p, enemies = [], shells = [], wins = 0, mx = 360, my = 220, state = 'MENU', cool = 0;
+const keys = {};
+
+function startRound(keepScore = false) {
+  if (!keepScore) wins = 0;
+  document.getElementById('sc').textContent = wins;
+  p = { x: 80, y: 220 };
+  const count = Math.min(4, 1 + Math.floor(wins / 2));
+  enemies = Array.from({length: count}, (_, i) => ({ x: 620, y: 90 + i * 90, t: 40 + i * 25 }));
+  shells = [];
+  document.getElementById('en').textContent = enemies.length;
+  state = 'PLAY'; ov.hidden = true;
+}
+function hitsWall(x, y, pad = 0) {
+  return WALLS.some(w => x + pad > w.x && x - pad < w.x + w.w && y + pad > w.y && y - pad < w.y + w.h);
+}
+function fire(x, y, ang, owner) {
+  shells.push({ x: x + Math.cos(ang)*20, y: y + Math.sin(ang)*20, vx: Math.cos(ang)*6.2, vy: Math.sin(ang)*6.2, b: 2, owner });
+}
+function loop() {
+  if (state === 'PLAY') {
+    if (cool > 0) cool--;
+    let nx = p.x, ny = p.y;
+    if (keys['w'] || keys['arrowup']) ny -= 3.2;
+    if (keys['s'] || keys['arrowdown']) ny += 3.2;
+    if (keys['a'] || keys['arrowleft']) nx -= 3.2;
+    if (keys['d'] || keys['arrowright']) nx += 3.2;
+    nx = Math.max(20, Math.min(c.width - 20, nx)); ny = Math.max(20, Math.min(c.height - 20, ny));
+    if (!hitsWall(nx, p.y, 14)) p.x = nx;
+    if (!hitsWall(p.x, ny, 14)) p.y = ny;
+
+    enemies.forEach(e => {
+      const ang = Math.atan2(p.y - e.y, p.x - e.x);
+      const ex = e.x + Math.cos(ang) * 1.1, ey = e.y + Math.sin(ang) * 1.1;
+      if (!hitsWall(ex, ey, 14)) { e.x = ex; e.y = ey; }
+      e.t--;
+      if (e.t <= 0) { fire(e.x, e.y, ang, 'e'); e.t = 90 + Math.random() * 50; }
+    });
+
+    for (let i = shells.length - 1; i >= 0; i--) {
+      const s = shells[i];
+      const nextX = s.x + s.vx, nextY = s.y + s.vy;
+      if (nextX < 6 || nextX > c.width - 6 || hitsWall(nextX, s.y, 4)) { s.vx *= -1; s.b--; }
+      else s.x = nextX;
+      if (nextY < 6 || nextY > c.height - 6 || hitsWall(s.x, nextY, 4)) { s.vy *= -1; s.b--; }
+      else s.y = nextY;
+      if (s.b < 0) { shells.splice(i, 1); continue; }
+
+      if (Math.hypot(s.x - p.x, s.y - p.y) < 16 && s.owner !== 'p_imm') {
+        state = 'OVER';
+        document.getElementById('ov-t').textContent = 'Tank Destroyed!';
+        document.getElementById('ov-p').textContent = `Streak: ${wins} wins`;
+        document.getElementById('go').textContent = 'Play Again';
+        ov.hidden = false;
+      }
+      const hitE = enemies.findIndex(e => Math.hypot(s.x - e.x, s.y - e.y) < 16);
+      if (hitE !== -1 && s.owner === 'p') {
+        enemies.splice(hitE, 1); shells.splice(i, 1);
+        document.getElementById('en').textContent = enemies.length;
+        if (enemies.length === 0) { wins++; startRound(true); }
+      }
+    }
+  }
+  ctx.fillStyle = '#0a1224'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#334155'; WALLS.forEach(w => ctx.fillRect(w.x, w.y, w.w, w.h));
+  if (p) {
+    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI * 2); ctx.fill();
+    const ang = Math.atan2(my - p.y, mx - p.x);
+    ctx.strokeStyle = '#bae6fd'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(ang)*22, p.y + Math.sin(ang)*22); ctx.stroke();
+  }
+  enemies.forEach(e => { ctx.fillStyle = '#f43f5e'; ctx.beginPath(); ctx.arc(e.x, e.y, 14, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = '#fde047'; shells.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI * 2); ctx.fill(); });
+  requestAnimationFrame(loop);
+}
+c.addEventListener('pointermove', (e) => { const r = c.getBoundingClientRect(); mx = ((e.clientX - r.left)/r.width)*c.width; my = ((e.clientY - r.top)/r.height)*c.height; });
+c.addEventListener('pointerdown', () => {
+  if (state === 'PLAY' && cool === 0) { fire(p.x, p.y, Math.atan2(my - p.y, mx - p.x), 'p'); cool = 16; }
+});
+document.getElementById('go').addEventListener('click', () => startRound(false));
+document.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+loop();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pocket Air Hockey 2P</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 100%; height: 100%; overflow: hidden;
+        background: #060912; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .hud {
+        width: min(760px, 96vw); display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 8px 12px; margin-bottom: 8px;
+        background: #0f1628; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+      }
+      .p1 { color: #38bdf8; } .p2 { color: #f43f5e; }
+      button {
+        background: #1a233a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+      }
+      button.active { background: #38bdf8; color: #060912; border-color: #38bdf8; }
+      canvas {
+        width: min(760px, 96vw); height: min(440px, 75vh);
+        background: #091022; border: 2px solid rgba(56,189,248,0.35); border-radius: 16px;
+      }
+      .tip { margin-top: 6px; font-size: 12px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span class="p1">P1: <span id="s1">0</span></span>
+      <span id="msg">First to 7 Goals</span>
+      <span class="p2">P2: <span id="s2">0</span></span>
+      <div>
+        <button id="modeBtn" type="button">Mode: vs Bot</button>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+    <canvas id="c" width="760" height="440"></canvas>
+    <div class="tip">P1: Mouse or WASD · P2 (2P Mode): Arrow Keys</div>
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const s1El = document.getElementById('s1');
+      const s2El = document.getElementById('s2');
+      const msgEl = document.getElementById('msg');
+      const modeBtn = document.getElementById('modeBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      let vsCpu = true, scores = [0, 0];
+      const keys = new Set();
+      const s1 = { x: 95, y: 220, vx: 0, vy: 0, r: 24, color: '#38bdf8' };
+      const s2 = { x: 665, y: 220, vx: 0, vy: 0, r: 24, color: '#f43f5e' };
+      const puck = { x: 380, y: 220, vx: 0, vy: 0, r: 15 };
+
+      function resetPuck(side) {
+        puck.x = side === 1 ? 300 : side === 2 ? 460 : 380;
+        puck.y = 220;
+        puck.vx = 0; puck.vy = 0;
+        s1.x = 95; s1.y = 220;
+        s2.x = 665; s2.y = 220;
+      }
+
+      modeBtn.addEventListener('click', () => {
+        vsCpu = !vsCpu;
+        modeBtn.textContent = vsCpu ? 'Mode: vs Bot' : 'Mode: 2P Local';
+        modeBtn.classList.toggle('active', !vsCpu);
+        scores = [0, 0]; s1El.textContent = '0'; s2El.textContent = '0';
+        resetPuck(0);
+      });
+      resetBtn.addEventListener('click', () => {
+        scores = [0, 0]; s1El.textContent = '0'; s2El.textContent = '0';
+        msgEl.textContent = 'First to 7 Goals';
+        resetPuck(0);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = ((e.clientX - rect.left) / rect.width) * canvas.width;
+        const my = ((e.clientY - rect.top) / rect.height) * canvas.height;
+        if (mx <= canvas.width / 2 - s1.r) {
+          s1.vx = mx - s1.x; s1.vy = my - s1.y;
+          s1.x = Math.max(s1.r, mx);
+          s1.y = Math.max(s1.r, Math.min(canvas.height - s1.r, my));
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+        keys.add(e.code);
+      });
+      window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+      function hitStriker(st) {
+        const dx = puck.x - st.x, dy = puck.y - st.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = puck.r + st.r;
+        if (dist < minDist && dist > 0.01) {
+          const nx = dx / dist, ny = dy / dist;
+          puck.x = st.x + nx * minDist;
+          puck.y = st.y + ny * minDist;
+          const speed = Math.min(12, Math.hypot(puck.vx, puck.vy) * 0.85 + Math.hypot(st.vx, st.vy) * 0.7 + 4.2);
+          puck.vx = nx * speed;
+          puck.vy = ny * speed;
+        }
+      }
+
+      function update() {
+        const k1x = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
+        const k1y = (keys.has('KeyS') ? 1 : 0) - (keys.has('KeyW') ? 1 : 0);
+        if (k1x || k1y) {
+          s1.vx = k1x * 6.5; s1.vy = k1y * 6.5;
+          s1.x = Math.max(s1.r, Math.min(canvas.width / 2 - s1.r, s1.x + s1.vx));
+          s1.y = Math.max(s1.r, Math.min(canvas.height - s1.r, s1.y + s1.vy));
+        } else {
+          s1.vx *= 0.6; s1.vy *= 0.6;
+        }
+
+        if (vsCpu) {
+          const targetX = puck.x > canvas.width / 2 ? Math.max(canvas.width / 2 + s2.r, Math.min(canvas.width - 45, puck.x + 14)) : 655;
+          const targetY = Math.max(s2.r, Math.min(canvas.height - s2.r, puck.y));
+          s2.vx = Math.max(-5.5, Math.min(5.5, (targetX - s2.x) * 0.16));
+          s2.vy = Math.max(-5.5, Math.min(5.5, (targetY - s2.y) * 0.16));
+          s2.x += s2.vx; s2.y += s2.vy;
+        } else {
+          const k2x = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+          const k2y = (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0);
+          s2.vx = k2x * 6.5; s2.vy = k2y * 6.5;
+          s2.x = Math.max(canvas.width / 2 + s2.r, Math.min(canvas.width - s2.r, s2.x + s2.vx));
+          s2.y = Math.max(s2.r, Math.min(canvas.height - s2.r, s2.y + s2.vy));
+        }
+
+        puck.x += puck.vx;
+        puck.y += puck.vy;
+        puck.vx *= 0.992;
+        puck.vy *= 0.992;
+
+        if (puck.y - puck.r < 0) { puck.y = puck.r; puck.vy *= -1; }
+        if (puck.y + puck.r > canvas.height) { puck.y = canvas.height - puck.r; puck.vy *= -1; }
+
+        const inGoal = puck.y > 145 && puck.y < 295;
+        if (puck.x - puck.r < 0) {
+          if (inGoal) {
+            scores[1]++; s2El.textContent = String(scores[1]);
+            if (scores[1] >= 7) { msgEl.textContent = 'P2 Wins 7 Goals!'; scores = [0,0]; s1El.textContent='0'; s2El.textContent='0'; }
+            resetPuck(1);
+          } else { puck.x = puck.r; puck.vx *= -1; }
+        }
+        if (puck.x + puck.r > canvas.width) {
+          if (inGoal) {
+            scores[0]++; s1El.textContent = String(scores[0]);
+            if (scores[0] >= 7) { msgEl.textContent = 'P1 Wins 7 Goals!'; scores = [0,0]; s1El.textContent='0'; s2El.textContent='0'; }
+            resetPuck(2);
+          } else { puck.x = canvas.width - puck.r; puck.vx *= -1; }
+        }
+
+        hitStriker(s1);
+        hitStriker(s2);
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.arc(canvas.width / 2, canvas.height / 2, 58, 0, Math.PI * 2); ctx.stroke();
+
+        ctx.fillStyle = '#38bdf8'; ctx.fillRect(0, 145, 8, 150);
+        ctx.fillStyle = '#f43f5e'; ctx.fillRect(canvas.width - 8, 145, 8, 150);
+
+        for (const st of [s1, s2]) {
+          ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+          ctx.fillStyle = st.color; ctx.fill();
+          ctx.beginPath(); ctx.arc(st.x, st.y, 10, 0, Math.PI * 2);
+          ctx.fillStyle = '#091022'; ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#f8fafc'; ctx.fill();
+      }
+
+      function loop() {
+        update();
+        render();
+        requestAnimationFrame(loop);
+      }
+      resetPuck(0);
+      loop();
+    </script>
+  </body>
+</html>

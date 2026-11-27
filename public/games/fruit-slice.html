@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Blade Slice</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:720px;display:flex;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:720px;min-height:0}
+  canvas{width:100%;height:100%;background:#0a1122;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:crosshair}
+  .ov{position:absolute;inset:0;background:rgba(10,17,34,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Score: <strong id="sc">0</strong> · Lives: <strong id="lv">3</strong></span><span>Drag / Swipe targets, avoid red bombs!</span></div>
+  <div class="stage">
+    <canvas id="c" width="720" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Blade Slice</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Swipe across launching glowing orbs with your mouse or finger, but don’t slice red bombs!</p>
+      <button id="go" type="button">Start Slicing</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const COLS = ['#22c55e','#f59e0b','#38bdf8','#ec4899'];
+let items = [], trail = [], down = false, score = 0, lives = 3, tick = 0, state = 'MENU';
+
+function start() {
+  items = []; trail = []; score = 0; lives = 3; tick = 0;
+  document.getElementById('sc').textContent = 0; document.getElementById('lv').textContent = 3;
+  state = 'PLAY'; ov.hidden = true;
+}
+function spawn() {
+  const bomb = Math.random() < 0.2;
+  items.push({
+    x: 80 + Math.random() * (c.width - 160), y: c.height + 20,
+    vx: (Math.random() - 0.5) * 4, vy: -(10.5 + Math.random() * 3.5),
+    r: bomb ? 20 : 22, bomb, color: bomb ? '#ef4444' : COLS[Math.floor(Math.random()*COLS.length)]
+  });
+}
+function loop() {
+  if (state === 'PLAY') {
+    tick++;
+    if (tick % 38 === 0) spawn();
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      it.vy += 0.24; it.x += it.vx; it.y += it.vy;
+      if (it.y > c.height + 50) {
+        if (!it.bomb) { lives--; document.getElementById('lv').textContent = lives; if (lives <= 0) die(); }
+        items.splice(i, 1);
+      }
+    }
+    if (trail.length > 10) trail.shift();
+  }
+  ctx.fillStyle = '#0a1122'; ctx.fillRect(0, 0, c.width, c.height);
+  items.forEach(it => {
+    ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI * 2); ctx.fill();
+    if (it.bomb) { ctx.fillStyle = '#fff'; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'center'; ctx.fillText('X', it.x, it.y + 5); }
+  });
+  if (trail.length > 1) {
+    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath();
+    trail.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+  }
+  requestAnimationFrame(loop);
+}
+function die() {
+  state = 'OVER';
+  document.getElementById('ov-t').textContent = 'Run Over!';
+  document.getElementById('ov-p').textContent = `Final Score: ${score}`;
+  document.getElementById('go').textContent = 'Play Again';
+  ov.hidden = false;
+}
+function sliceAt(x, y) {
+  trail.push({x, y});
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (Math.hypot(it.x - x, it.y - y) < it.r + 8) {
+      if (it.bomb) { items.splice(i, 1); die(); return; }
+      items.splice(i, 1); score += 15; document.getElementById('sc').textContent = score;
+    }
+  }
+}
+function pt(e) { const r = c.getBoundingClientRect(); return { x: ((e.clientX - r.left)/r.width)*c.width, y: ((e.clientY - r.top)/r.height)*c.height }; }
+c.addEventListener('pointerdown', (e) => { down = true; const p = pt(e); if (state === 'PLAY') sliceAt(p.x, p.y); });
+window.addEventListener('pointerup', () => { down = false; trail = []; });
+c.addEventListener('pointermove', (e) => { if (down && state === 'PLAY') { const p = pt(e); sliceAt(p.x, p.y); } });
+document.getElementById('go').addEventListener('click', start);
+loop();
+</script>
+</body>
+</html>

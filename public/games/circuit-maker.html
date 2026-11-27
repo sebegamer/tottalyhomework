@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic Circuit Forge</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .bar{width:100%;max-width:760px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px}
+  .row{display:flex;flex-wrap:wrap;gap:6px}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  button.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  canvas{flex:1;width:100%;max-width:760px;min-height:0;background:#0b1120;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="row" id="tools"></div>
+    <div class="row">
+      <button id="demo-btn" type="button">XOR Demo</button>
+      <button id="clear-btn" type="button">Clear</button>
+    </div>
+  </div>
+  <canvas id="c" width="760" height="450"></canvas>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const TOOLS = ['Click / Toggle', 'Switch', 'AND', 'OR', 'XOR', 'NOT', 'Lamp', 'Wire'];
+let tool = 'Click / Toggle', nodes = [], wires = [], wireFrom = null, nextId = 1;
+
+const toolsEl = document.getElementById('tools');
+TOOLS.forEach((t) => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = t;
+  if (t === tool) b.classList.add('active');
+  b.addEventListener('click', () => {
+    tool = t; wireFrom = null;
+    Array.from(toolsEl.children).forEach((el, i) => el.classList.toggle('active', TOOLS[i] === tool));
+    draw();
+  });
+  toolsEl.appendChild(b);
+});
+
+function loadDemo() {
+  nodes = [
+    { id: 1, type: 'Switch', x: 110, y: 150, val: true },
+    { id: 2, type: 'Switch', x: 110, y: 290, val: false },
+    { id: 3, type: 'XOR', x: 360, y: 220, val: false },
+    { id: 4, type: 'Lamp', x: 600, y: 220, val: false },
+  ];
+  wires = [{ from: 1, to: 3 }, { from: 2, to: 3 }, { from: 3, to: 4 }];
+  nextId = 5;
+  evalCircuit();
+  draw();
+}
+
+function evalCircuit() {
+  for (let pass = 0; pass < 8; pass++) {
+    for (const n of nodes) {
+      if (n.type === 'Switch') continue;
+      const ins = wires.filter((w) => w.to === n.id).map((w) => nodes.find((x) => x.id === w.from)?.val || false);
+      if (n.type === 'AND') n.val = ins.length >= 2 && ins.every(Boolean);
+      else if (n.type === 'OR') n.val = ins.some(Boolean);
+      else if (n.type === 'XOR') n.val = ins.filter(Boolean).length % 2 === 1;
+      else if (n.type === 'NOT') n.val = !(ins[0] || false);
+      else if (n.type === 'Lamp') n.val = ins.some(Boolean);
+    }
+  }
+}
+
+function draw() {
+  ctx.fillStyle = '#0b1120';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (const w of wires) {
+    const a = nodes.find((n) => n.id === w.from), b = nodes.find((n) => n.id === w.to);
+    if (!a || !b) continue;
+    ctx.strokeStyle = a.val ? '#f59e0b' : '#475569';
+    ctx.lineWidth = a.val ? 4 : 2.5;
+    ctx.beginPath(); ctx.moveTo(a.x + 34, a.y); ctx.lineTo(b.x - 34, b.y); ctx.stroke();
+  }
+
+  for (const n of nodes) {
+    const active = n.val;
+    ctx.fillStyle = n.type === 'Lamp' ? (active ? '#f59e0b' : '#1e293b') : '#131d31';
+    ctx.strokeStyle = wireFrom === n.id ? '#38bdf8' : active ? '#f59e0b' : 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(n.x - 34, n.y - 22, 68, 44, 8); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = n.type === 'Lamp' && active ? '#0f172a' : '#f8fafc';
+    ctx.font = 'bold 12px system-ui';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(n.type === 'Switch' ? (active ? 'ON (1)' : 'OFF (0)') : n.type, n.x, n.y);
+  }
+}
+
+canvas.addEventListener('click', (e) => {
+  const r = canvas.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * canvas.width;
+  const y = ((e.clientY - r.top) / r.height) * canvas.height;
+  const hit = nodes.find((n) => Math.abs(n.x - x) < 36 && Math.abs(n.y - y) < 24);
+
+  if (tool === 'Click / Toggle') {
+    if (hit && hit.type === 'Switch') { hit.val = !hit.val; evalCircuit(); draw(); }
+    return;
+  }
+  if (tool === 'Wire') {
+    if (!hit) { wireFrom = null; draw(); return; }
+    if (!wireFrom) { wireFrom = hit.id; draw(); return; }
+    if (wireFrom !== hit.id && !wires.some((w) => w.from === wireFrom && w.to === hit.id)) {
+      wires.push({ from: wireFrom, to: hit.id });
+    }
+    wireFrom = null; evalCircuit(); draw();
+    return;
+  }
+  if (!hit) {
+    nodes.push({ id: nextId++, type: tool, x, y, val: false });
+    evalCircuit(); draw();
+  }
+});
+
+document.getElementById('demo-btn').addEventListener('click', loadDemo);
+document.getElementById('clear-btn').addEventListener('click', () => { nodes = []; wires = []; wireFrom = null; draw(); });
+loadDemo();
+</script>
+</body>
+</html>

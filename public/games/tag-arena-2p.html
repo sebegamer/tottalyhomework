@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Platform Star Duel 2P</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 100%; height: 100%; overflow: hidden;
+        background: #060912; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .hud {
+        width: min(740px, 95vw); display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 8px 12px; margin-bottom: 8px;
+        background: #0f1628; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+      }
+      .p1 { color: #38bdf8; } .p2 { color: #a78bfa; }
+      button {
+        background: #1a233a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+      }
+      button.active { background: #a78bfa; color: #060912; border-color: #a78bfa; }
+      canvas {
+        width: min(740px, 95vw); height: min(440px, 75vh);
+        background: #080d1a; border: 1px solid rgba(167,139,250,0.3); border-radius: 12px;
+      }
+      .tip { margin-top: 6px; font-size: 12px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span class="p1">P1 Stars: <span id="s1">0</span></span>
+      <span id="timer">Time: 45s</span>
+      <span class="p2">P2 Stars: <span id="s2">0</span></span>
+      <div>
+        <button id="modeBtn" type="button">Mode: 2P Local</button>
+        <button id="resetBtn" type="button">Restart</button>
+      </div>
+    </div>
+    <canvas id="c" width="740" height="440"></canvas>
+    <div class="tip">P1: A/D + W Jump + S/Space Zap · P2: Left/Right + Up Jump + Down/Enter Zap</div>
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const s1El = document.getElementById('s1');
+      const s2El = document.getElementById('s2');
+      const timerEl = document.getElementById('timer');
+      const modeBtn = document.getElementById('modeBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      const keys = new Set();
+      let vsCpu = false, timeLeft = 45, frameCount = 0, over = false;
+      const platforms = [
+        { x: 0, y: 405, w: 740, h: 35 },
+        { x: 70, y: 310, w: 170, h: 14 },
+        { x: 500, y: 310, w: 170, h: 14 },
+        { x: 280, y: 235, w: 180, h: 14 },
+        { x: 95, y: 155, w: 140, h: 14 },
+        { x: 505, y: 155, w: 140, h: 14 },
+      ];
+      let star = { x: 370, y: 190 };
+      let shots = [];
+
+      const p1 = { x: 110, y: 350, vx: 0, vy: 0, dir: 1, grounded: false, cd: 0, score: 0, color: '#38bdf8' };
+      const p2 = { x: 600, y: 350, vx: 0, vy: 0, dir: -1, grounded: false, cd: 0, score: 0, color: '#a78bfa' };
+
+      function spawnStar() {
+        const spots = [[370, 195], [155, 115], [575, 115], [155, 270], [585, 270], [370, 365]];
+        const pick = spots[Math.floor(Math.random() * spots.length)];
+        star = { x: pick[0], y: pick[1] };
+      }
+
+      function restart() {
+        p1.x = 110; p1.y = 350; p1.vx = 0; p1.vy = 0; p1.score = 0;
+        p2.x = 600; p2.y = 350; p2.vx = 0; p2.vy = 0; p2.score = 0;
+        shots = []; timeLeft = 45; frameCount = 0; over = false;
+        s1El.textContent = '0'; s2El.textContent = '0';
+        timerEl.textContent = 'Time: 45s';
+        spawnStar();
+      }
+
+      modeBtn.addEventListener('click', () => {
+        vsCpu = !vsCpu;
+        modeBtn.textContent = vsCpu ? 'Mode: vs Bot' : 'Mode: 2P Local';
+        modeBtn.classList.toggle('active', vsCpu);
+        restart();
+      });
+      resetBtn.addEventListener('click', restart);
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter'].includes(e.code)) e.preventDefault();
+        keys.add(e.code);
+      });
+      window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+      function stepPlayer(p, left, right, jump, shoot, id) {
+        if (p.cd > 0) p.cd--;
+        const move = (right ? 1 : 0) - (left ? 1 : 0);
+        if (move !== 0) p.dir = move;
+        p.vx = move * 4.4;
+        if (jump && p.grounded) { p.vy = -10.8; p.grounded = false; }
+        p.vy += 0.48;
+        p.x = Math.max(14, Math.min(canvas.width - 42, p.x + p.vx));
+        const prevBottom = p.y + 28;
+        p.y += p.vy;
+        p.grounded = false;
+        for (const pl of platforms) {
+          if (p.vy >= 0 && prevBottom <= pl.y + 6 && p.y + 28 >= pl.y && p.x + 26 > pl.x && p.x < pl.x + pl.w) {
+            p.y = pl.y - 28;
+            p.vy = 0;
+            p.grounded = true;
+          }
+        }
+        if (shoot && p.cd === 0) {
+          p.cd = 26;
+          shots.push({ x: p.x + 14, y: p.y + 14, vx: p.dir * 8.5, owner: id, color: p.color });
+        }
+      }
+
+      function update() {
+        if (over) return;
+        frameCount++;
+        if (frameCount % 60 === 0) {
+          timeLeft--;
+          if (timeLeft <= 0) {
+            over = true;
+            timerEl.textContent = p1.score === p2.score ? 'Draw!' : p1.score > p2.score ? 'P1 Wins!' : 'P2 Wins!';
+            return;
+          }
+          timerEl.textContent = `Time: ${timeLeft}s`;
+        }
+
+        stepPlayer(p1, keys.has('KeyA'), keys.has('KeyD'), keys.has('KeyW'), keys.has('Space') || keys.has('KeyS'), 1);
+
+        if (vsCpu) {
+          const dx = star.x - (p2.x + 14);
+          const wantJump = star.y < p2.y - 20 && p2.grounded;
+          const aimP1 = Math.abs(p1.y - p2.y) < 35;
+          if (aimP1) p2.dir = p1.x > p2.x ? 1 : -1;
+          stepPlayer(p2, dx < -12, dx > 12, wantJump, aimP1, 2);
+        } else {
+          stepPlayer(p2, keys.has('ArrowLeft'), keys.has('ArrowRight'), keys.has('ArrowUp'), keys.has('Enter') || keys.has('ArrowDown'), 2);
+        }
+
+        for (const [pl, el] of [[p1, s1El], [p2, s2El]]) {
+          if (Math.hypot(pl.x + 14 - star.x, pl.y + 14 - star.y) < 28) {
+            pl.score++;
+            el.textContent = String(pl.score);
+            spawnStar();
+          }
+        }
+
+        for (let i = shots.length - 1; i >= 0; i--) {
+          const s = shots[i];
+          s.x += s.vx;
+          if (s.x < 0 || s.x > canvas.width) { shots.splice(i, 1); continue; }
+          const target = s.owner === 1 ? p2 : p1;
+          if (s.x > target.x && s.x < target.x + 28 && s.y > target.y && s.y < target.y + 28) {
+            target.vx = Math.sign(s.vx) * 8;
+            target.vy = -6;
+            const shooter = s.owner === 1 ? p1 : p2;
+            shooter.score++;
+            (s.owner === 1 ? s1El : s2El).textContent = String(shooter.score);
+            shots.splice(i, 1);
+          }
+        }
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#1e293b';
+        for (const pl of platforms) ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+
+        for (const p of [p1, p2]) {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, 28, 28);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(p.dir > 0 ? p.x + 16 : p.x + 4, p.y + 7, 8, 6);
+        }
+        for (const s of shots) {
+          ctx.fillStyle = s.color;
+          ctx.fillRect(s.x - 6, s.y - 2, 12, 4);
+        }
+      }
+
+      function loop() {
+        update();
+        render();
+        requestAnimationFrame(loop);
+      }
+      restart();
+      loop();
+    </script>
+  </body>
+</html>

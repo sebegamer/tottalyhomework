@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tower of Hanoi</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:14px;gap:14px;align-items:center;justify-content:center}
+  .hud{width:100%;max-width:640px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 12px;font-weight:600;cursor:pointer}
+  .pegs{width:100%;max-width:640px;height:300px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .peg{position:relative;background:#0f172a;border:1px solid rgba(255,255,255,.1);border-radius:12px;display:flex;flex-direction:column-reverse;align-items:center;padding:16px 10px;gap:6px;cursor:pointer}
+  .peg.sel{border-color:#f59e0b;background:#152038}
+  .disk{height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#0f172a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <span>Moves: <strong id="mv">0</strong> / Min: <strong id="min">15</strong> · <span id="st">Move stack to right peg</span></span>
+    <div style="display:flex;gap:6px">
+      <button id="disk-btn" type="button">Disks: 4</button>
+      <button id="rst-btn" type="button">Reset</button>
+    </div>
+  </div>
+  <div class="pegs" id="pegs"></div>
+</div>
+<script>
+const COLS = ['#38bdf8','#34d399','#f59e0b','#f472b6','#a78bfa'];
+let count = 4, pegs = [], sel = -1, moves = 0;
+
+function reset() {
+  pegs = [Array.from({length: count}, (_, i) => count - i), [], []];
+  sel = -1; moves = 0;
+  document.getElementById('mv').textContent = 0;
+  document.getElementById('min').textContent = Math.pow(2, count) - 1;
+  document.getElementById('st').textContent = 'Move stack to right peg';
+  render();
+}
+function clickPeg(idx) {
+  if (sel === -1) {
+    if (pegs[idx].length) sel = idx;
+  } else {
+    if (sel !== idx) {
+      const fromTop = pegs[sel][pegs[sel].length - 1];
+      const toTop = pegs[idx][pegs[idx].length - 1];
+      if (!toTop || fromTop < toTop) {
+        pegs[idx].push(pegs[sel].pop());
+        moves++; document.getElementById('mv').textContent = moves;
+        if (pegs[2].length === count) document.getElementById('st').textContent = `Solved in ${moves} moves!`;
+      }
+    }
+    sel = -1;
+  }
+  render();
+}
+function render() {
+  const wrap = document.getElementById('pegs'); wrap.replaceChildren();
+  pegs.forEach((stack, i) => {
+    const p = document.createElement('div');
+    p.className = 'peg' + (i === sel ? ' sel' : '');
+    p.addEventListener('click', () => clickPeg(i));
+    stack.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'disk';
+      el.style.width = `${34 + d * 13}%`;
+      el.style.background = COLS[(d - 1) % COLS.length];
+      el.textContent = d;
+      p.appendChild(el);
+    });
+    wrap.appendChild(p);
+  });
+}
+document.getElementById('disk-btn').addEventListener('click', (e) => {
+  count = count === 4 ? 5 : count === 5 ? 3 : 4;
+  e.target.textContent = `Disks: ${count}`;
+  reset();
+});
+document.getElementById('rst-btn').addEventListener('click', reset);
+reset();
+</script>
+</body>
+</html>

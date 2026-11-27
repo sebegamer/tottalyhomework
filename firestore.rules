@@ -52,6 +52,14 @@ service cloud.firestore {
           'favorites',
           'recentIds',
           'playCounts',
+          'achievements',
+          'equippedFlair',
+          'coins',
+          'lifetimeCoins',
+          'unlockedThemes',
+          'equippedTheme',
+          'hwDone',
+          'quizCorrect',
           'createdAt',
           'updatedAt'
         ])
@@ -73,6 +81,34 @@ service cloud.firestore {
         && (data.recentIds.size() == 0 || (data.recentIds[0] is string && data.recentIds[0].size() >= 1 && data.recentIds[0].size() <= 64))
         && data.playCounts is map
         && data.playCounts.size() <= 50
+        && (!('achievements' in data) || (
+          data.achievements is list
+          && data.achievements.size() <= 30
+          && (data.achievements.size() == 0 || (data.achievements[0] is string && data.achievements[0].size() >= 1 && data.achievements[0].size() <= 64))
+        ))
+        && (!('equippedFlair' in data) || (
+          data.equippedFlair is string
+          && data.equippedFlair.size() <= 64
+          && (data.equippedFlair == '' || data.equippedFlair.matches('^[a-zA-Z0-9_\\-]+$'))
+        ))
+        && (!('coins' in data) || (data.coins is int && data.coins >= 0 && data.coins <= 1000000))
+        && (!('lifetimeCoins' in data) || (data.lifetimeCoins is int && data.lifetimeCoins >= 0 && data.lifetimeCoins <= 1000000))
+        && (!('unlockedThemes' in data) || (
+          data.unlockedThemes is list
+          && data.unlockedThemes.size() <= 20
+          && (data.unlockedThemes.size() == 0 || (data.unlockedThemes[0] is string && data.unlockedThemes[0].size() >= 1 && data.unlockedThemes[0].size() <= 64))
+        ))
+        && (!('equippedTheme' in data) || (
+          data.equippedTheme is string
+          && data.equippedTheme.size() <= 64
+          && (data.equippedTheme == '' || data.equippedTheme.matches('^[a-zA-Z0-9_\\-]+$'))
+        ))
+        && (!('hwDone' in data) || (
+          data.hwDone is list
+          && data.hwDone.size() <= 50
+          && (data.hwDone.size() == 0 || (data.hwDone[0] is string && data.hwDone[0].size() >= 1 && data.hwDone[0].size() <= 64))
+        ))
+        && (!('quizCorrect' in data) || (data.quizCorrect is int && data.quizCorrect >= 0 && data.quizCorrect <= 100000))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -100,11 +136,19 @@ service cloud.firestore {
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
         && (
-          // Action 1: Sync favorites, recent history, or play counts
+          // Action 1: Sync favorites, recent history, play counts, achievements, coins, themes, or homework progress
           incoming().diff(existing()).affectedKeys().hasOnly([
             'favorites',
             'recentIds',
             'playCounts',
+            'achievements',
+            'equippedFlair',
+            'coins',
+            'lifetimeCoins',
+            'unlockedThemes',
+            'equippedTheme',
+            'hwDone',
+            'quizCorrect',
             'updatedAt'
           ])
           ||
@@ -116,7 +160,7 @@ service cloud.firestore {
             'updatedAt'
           ])
           ||
-          // Action 3: Combined profile + local progress merge on login
+          // Action 3: Combined profile + progress merge on login
           incoming().diff(existing()).affectedKeys().hasOnly([
             'displayName',
             'email',
@@ -124,6 +168,14 @@ service cloud.firestore {
             'favorites',
             'recentIds',
             'playCounts',
+            'achievements',
+            'equippedFlair',
+            'coins',
+            'lifetimeCoins',
+            'unlockedThemes',
+            'equippedTheme',
+            'hwDone',
+            'quizCorrect',
             'updatedAt'
           ])
         );

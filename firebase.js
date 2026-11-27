@@ -124,6 +124,19 @@ export function sanitizePlayCounts(counts) {
   return out;
 }
 
+export function sanitizeEquippedFlair(flair) {
+  if (typeof flair !== 'string') return '';
+  const trimmed = flair.trim();
+  if (!trimmed || trimmed.length > 64 || !VALID_ID_REGEX.test(trimmed)) return '';
+  return trimmed;
+}
+
+export function sanitizeSafeInt(val, maxVal = 1000000) {
+  const num = Math.floor(Number(val) || 0);
+  if (!Number.isFinite(num) || num < 0) return 0;
+  return Math.min(maxVal, num);
+}
+
 function mergePlayCounts(cloudCounts, localCounts) {
   const merged = { ...sanitizePlayCounts(cloudCounts) };
   const cleanLocal = sanitizePlayCounts(localCounts);
@@ -163,6 +176,7 @@ export async function ensureUserAccount(user, localState) {
   const localFavorites = sanitizeIdArray(localState?.favorites || [], 50);
   const localRecent = sanitizeIdArray(localState?.recentIds || [], 6);
   const localCounts = sanitizePlayCounts(localState?.playCounts || {});
+  const localHwDone = sanitizeIdArray(localState?.hwDone || [], 50);
 
   if (!snap.exists()) {
     const newAccount = {
@@ -173,6 +187,14 @@ export async function ensureUserAccount(user, localState) {
       favorites: localFavorites,
       recentIds: localRecent,
       playCounts: localCounts,
+      achievements: [],
+      equippedFlair: '',
+      coins: 0,
+      lifetimeCoins: 0,
+      unlockedThemes: [],
+      equippedTheme: '',
+      hwDone: localHwDone,
+      quizCorrect: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -197,10 +219,20 @@ export async function ensureUserAccount(user, localState) {
   const cloudFavorites = sanitizeIdArray(existing.favorites || [], 50);
   const cloudRecent = sanitizeIdArray(existing.recentIds || [], 6);
   const cloudCounts = sanitizePlayCounts(existing.playCounts || {});
+  const cloudAchievements = sanitizeIdArray(existing.achievements || [], 30);
+  const cloudEquipped = sanitizeEquippedFlair(existing.equippedFlair || '');
+  const safeEquipped = cloudEquipped && cloudAchievements.includes(cloudEquipped) ? cloudEquipped : '';
+  const cloudCoins = sanitizeSafeInt(existing.coins, 1000000);
+  const cloudLifetimeCoins = Math.max(cloudCoins, sanitizeSafeInt(existing.lifetimeCoins, 1000000));
+  const cloudUnlockedThemes = sanitizeIdArray(existing.unlockedThemes || [], 20);
+  const cloudEquippedTheme = sanitizeEquippedFlair(existing.equippedTheme || '');
+  const cloudHwDone = sanitizeIdArray(existing.hwDone || [], 50);
+  const cloudQuizCorrect = sanitizeSafeInt(existing.quizCorrect, 100000);
 
   const mergedFavorites = sanitizeIdArray([...cloudFavorites, ...localFavorites], 50);
   const mergedRecent = sanitizeIdArray([...localRecent, ...cloudRecent], 6);
   const mergedCounts = mergePlayCounts(cloudCounts, localCounts);
+  const mergedHwDone = sanitizeIdArray([...cloudHwDone, ...localHwDone], 50);
 
   const profileChanged =
     existing.displayName !== displayName ||
@@ -210,7 +242,16 @@ export async function ensureUserAccount(user, localState) {
   const dataChanged =
     mergedFavorites.length !== cloudFavorites.length ||
     mergedRecent.length !== cloudRecent.length ||
-    JSON.stringify(mergedCounts) !== JSON.stringify(cloudCounts);
+    mergedHwDone.length !== cloudHwDone.length ||
+    JSON.stringify(mergedCounts) !== JSON.stringify(cloudCounts) ||
+    !Array.isArray(existing.achievements) ||
+    typeof existing.equippedFlair !== 'string' ||
+    typeof existing.coins !== 'number' ||
+    typeof existing.lifetimeCoins !== 'number' ||
+    !Array.isArray(existing.unlockedThemes) ||
+    typeof existing.equippedTheme !== 'string' ||
+    !Array.isArray(existing.hwDone) ||
+    typeof existing.quizCorrect !== 'number';
 
   if (profileChanged || dataChanged) {
     const updatePayload = {
@@ -220,6 +261,14 @@ export async function ensureUserAccount(user, localState) {
       favorites: mergedFavorites,
       recentIds: mergedRecent,
       playCounts: mergedCounts,
+      achievements: cloudAchievements,
+      equippedFlair: safeEquipped,
+      coins: cloudCoins,
+      lifetimeCoins: cloudLifetimeCoins,
+      unlockedThemes: cloudUnlockedThemes,
+      equippedTheme: cloudEquippedTheme,
+      hwDone: mergedHwDone,
+      quizCorrect: cloudQuizCorrect,
       updatedAt: serverTimestamp(),
     };
 
@@ -240,6 +289,14 @@ export async function ensureUserAccount(user, localState) {
       favorites: mergedFavorites,
       recentIds: mergedRecent,
       playCounts: mergedCounts,
+      achievements: cloudAchievements,
+      equippedFlair: safeEquipped,
+      coins: cloudCoins,
+      lifetimeCoins: cloudLifetimeCoins,
+      unlockedThemes: cloudUnlockedThemes,
+      equippedTheme: cloudEquippedTheme,
+      hwDone: mergedHwDone,
+      quizCorrect: cloudQuizCorrect,
       createdAt: existing.createdAt || null,
       updatedAt: existing.updatedAt || null,
     },
@@ -270,10 +327,28 @@ export function subscribeToUserAccount(uid, onData, onError) {
 export async function syncUserArcadeData(uid, arcadeState) {
   const path = `users/${uid}`;
   const userRef = doc(db, 'users', uid);
+  const cleanAchievements = sanitizeIdArray(arcadeState?.achievements || [], 30);
+  const cleanEquipped = sanitizeEquippedFlair(arcadeState?.equippedFlair || '');
+  const safeEquipped = cleanEquipped && cleanAchievements.includes(cleanEquipped) ? cleanEquipped : '';
+  const cleanCoins = sanitizeSafeInt(arcadeState?.coins, 1000000);
+  const cleanLifetimeCoins = Math.max(cleanCoins, sanitizeSafeInt(arcadeState?.lifetimeCoins, 1000000));
+  const cleanUnlockedThemes = sanitizeIdArray(arcadeState?.unlockedThemes || [], 20);
+  const cleanEquippedTheme = sanitizeEquippedFlair(arcadeState?.equippedTheme || '');
+  const cleanHwDone = sanitizeIdArray(arcadeState?.hwDone || [], 50);
+  const cleanQuizCorrect = sanitizeSafeInt(arcadeState?.quizCorrect, 100000);
+
   const payload = {
     favorites: sanitizeIdArray(arcadeState?.favorites || [], 50),
     recentIds: sanitizeIdArray(arcadeState?.recentIds || [], 6),
     playCounts: sanitizePlayCounts(arcadeState?.playCounts || {}),
+    achievements: cleanAchievements,
+    equippedFlair: safeEquipped,
+    coins: cleanCoins,
+    lifetimeCoins: cleanLifetimeCoins,
+    unlockedThemes: cleanUnlockedThemes,
+    equippedTheme: cleanEquippedTheme,
+    hwDone: cleanHwDone,
+    quizCorrect: cleanQuizCorrect,
     updatedAt: serverTimestamp(),
   };
 

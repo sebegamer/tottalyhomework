@@ -13,6 +13,14 @@
    - `favorites`: list of strings, max 50 items (first item validated string 1..64 chars when non-empty)
    - `recentIds`: list of strings, max 6 items (first item validated string 1..64 chars when non-empty)
    - `playCounts`: map, max 50 entries
+   - `achievements` (optional): list of strings, max 30 items (first item validated string 1..64 chars when non-empty)
+   - `equippedFlair` (optional): string, 0..64 chars, `^[a-zA-Z0-9_\-]*$`
+   - `coins` (optional): integer, `0..1000000`
+   - `lifetimeCoins` (optional): integer, `0..1000000`
+   - `unlockedThemes` (optional): list of strings, max 20 items (first item validated string 1..64 chars when non-empty)
+   - `equippedTheme` (optional): string, 0..64 chars, `^[a-zA-Z0-9_\-]*$`
+   - `hwDone` (optional): list of strings, max 50 items (first item validated string 1..64 chars when non-empty)
+   - `quizCorrect` (optional): integer, `0..100000`
    - No shadow/ghost fields allowed on `create` or `update`.
 
 ---

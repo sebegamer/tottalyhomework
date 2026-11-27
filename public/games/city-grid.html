@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tiny City Planner</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .bar{width:100%;max-width:740px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;font-size:13px}
+  .stats{display:flex;gap:14px;font-variant-numeric:tabular-nums}
+  .stats strong{color:#f59e0b}
+  .row{display:flex;gap:6px;flex-wrap:wrap}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  button.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  .grid{flex:1;width:100%;max-width:740px;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(7,minmax(0,1fr));gap:5px;min-height:0}
+  .tile{border-radius:8px;border:1px solid rgba(255,255,255,.08);background:#101a2d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;padding:2px}
+  .tile:hover{border-color:rgba(245,158,11,.5)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="stats">
+      <span>Pop: <strong id="pop">0</strong></span>
+      <span>Power: <strong id="pwr">0</strong></span>
+      <span>Joy: <strong id="joy">100%</strong></span>
+    </div>
+    <div class="row" id="tools"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const TYPES = [
+  { id: 'house', label: 'House', bg: '#1d4ed8', pop: 12, pwr: -1 },
+  { id: 'shop', label: 'Shop', bg: '#7c3aed', pop: 4, pwr: -1 },
+  { id: 'park', label: 'Park', bg: '#15803d', pop: 0, pwr: 0 },
+  { id: 'solar', label: 'Solar', bg: '#d97706', pop: 0, pwr: 6 },
+  { id: 'road', label: 'Road', bg: '#334155', pop: 0, pwr: 0 },
+  { id: '', label: 'Clear', bg: '#101a2d', pop: 0, pwr: 0 },
+];
+let cells = Array(70).fill(''), tool = 'house';
+cells[34] = 'solar'; cells[35] = 'road'; cells[25] = 'house'; cells[45] = 'park';
+
+const toolsEl = document.getElementById('tools');
+TYPES.forEach((t) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = t.label;
+  if (t.id === tool) b.classList.add('active');
+  b.addEventListener('click', () => {
+    tool = t.id;
+    Array.from(toolsEl.children).forEach((el, i) => el.classList.toggle('active', TYPES[i].id === tool));
+  });
+  toolsEl.appendChild(b);
+});
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.replaceChildren();
+  let pop = 0, pwr = 0, parks = 0, houses = 0;
+  cells.forEach((cid, i) => {
+    const t = TYPES.find(x => x.id === cid) || TYPES[5];
+    pop += t.pop; pwr += t.pwr;
+    if (cid === 'park') parks++;
+    if (cid === 'house') houses++;
+    const d = document.createElement('button');
+    d.type = 'button'; d.className = 'tile';
+    d.style.background = t.bg;
+    d.textContent = cid ? t.label : '';
+    d.addEventListener('click', () => { cells[i] = tool; render(); });
+    grid.appendChild(d);
+  });
+  const joy = Math.max(20, Math.min(100, 70 + parks * 12 - Math.max(0, -pwr) * 15 - Math.max(0, houses - parks * 3) * 4));
+  document.getElementById('pop').textContent = pwr >= 0 ? pop : Math.floor(pop * 0.5);
+  document.getElementById('pwr').textContent = (pwr >= 0 ? '+' : '') + pwr;
+  document.getElementById('joy').textContent = joy + '%';
+}
+render();
+</script>
+</body>
+</html>

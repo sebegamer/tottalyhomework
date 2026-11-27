@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pellet Dash</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  canvas{flex:1;max-height:440px;aspect-ratio:15/13;background:#070c17;border:1px solid rgba(255,255,255,.14);border-radius:10px}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:7px;padding:6px 12px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Score: <strong id="sc">0</strong> · Pellets: <strong id="pl">0</strong></span><button id="rst" type="button">Restart</button></div>
+  <canvas id="c" width="450" height="390"></canvas>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), SZ = 30;
+const BASE = [
+  '###############',
+  '#o.....#.....o#',
+  '#.##.#.#.#.##.#',
+  '#.............#',
+  '#.##.###.###.##',
+  '#....#...#....#',
+  '####.#.#.#.####',
+  '#....#...#....#',
+  '#.##.###.###.##',
+  '#.............#',
+  '#.##.#.#.#.##.#',
+  '#o.....#.....o#',
+  '###############',
+];
+let map = [], px = 7, py = 9, dx = 0, dy = 0, ndx = 0, ndy = 0, score = 0, power = 0, tick = 0, over = false;
+let ghosts = [];
+
+function reset() {
+  map = BASE.map(r => r.split(''));
+  px = 7; py = 9; dx = 0; dy = 0; ndx = 0; ndy = 0; score = 0; power = 0; over = false;
+  ghosts = [{x:6,y:5,c:'#f43f5e'},{x:8,y:5,c:'#38bdf8'},{x:7,y:7,c:'#a855f7'}];
+  updateHud();
+}
+function updateHud() {
+  const left = map.flat().filter(ch => ch === '.' || ch === 'o').length;
+  document.getElementById('sc').textContent = score;
+  document.getElementById('pl').textContent = left;
+  if (left === 0 && !over) { over = true; score += 250; document.getElementById('sc').textContent = score; }
+}
+function canMove(x, y) { return map[y]?.[x] && map[y][x] !== '#'; }
+
+function step() {
+  if (over) return;
+  if (canMove(px + ndx, py + ndy)) { dx = ndx; dy = ndy; }
+  if (canMove(px + dx, py + dy)) { px += dx; py += dy; }
+  const cell = map[py][px];
+  if (cell === '.' || cell === 'o') {
+    map[py][px] = ' ';
+    score += cell === 'o' ? 50 : 10;
+    if (cell === 'o') power = 26;
+    updateHud();
+  }
+  if (power > 0) power--;
+  ghosts.forEach(g => {
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([ox,oy]) => canMove(g.x + ox, g.y + oy));
+    if (dirs.length) {
+      dirs.sort((a,b) => {
+        const da = Math.hypot(g.x + a[0] - px, g.y + a[1] - py);
+        const db = Math.hypot(g.x + b[0] - px, g.y + b[1] - py);
+        return power > 0 ? db - da : da - db;
+      });
+      const pick = Math.random() < 0.72 ? dirs[0] : dirs[Math.floor(Math.random()*dirs.length)];
+      g.x += pick[0]; g.y += pick[1];
+    }
+    if (g.x === px && g.y === py) {
+      if (power > 0) { g.x = 7; g.y = 5; score += 100; updateHud(); }
+      else { over = true; }
+    }
+  });
+}
+function draw() {
+  ctx.fillStyle = '#070c17'; ctx.fillRect(0, 0, c.width, c.height);
+  for (let y = 0; y < 13; y++) for (let x = 0; x < 15; x++) {
+    const ch = map[y][x];
+    if (ch === '#') { ctx.fillStyle = '#1d4ed8'; ctx.fillRect(x*SZ+2, y*SZ+2, SZ-4, SZ-4); }
+    else if (ch === '.') { ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(x*SZ+15, y*SZ+15, 3, 0, Math.PI*2); ctx.fill(); }
+    else if (ch === 'o') { ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(x*SZ+15, y*SZ+15, 6, 0, Math.PI*2); ctx.fill(); }
+  }
+  ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(px*SZ+15, py*SZ+15, 11, 0.25, Math.PI*2-0.25); ctx.lineTo(px*SZ+15, py*SZ+15); ctx.fill();
+  ghosts.forEach(g => {
+    ctx.fillStyle = power > 0 ? '#60a5fa' : g.c;
+    ctx.beginPath(); ctx.arc(g.x*SZ+15, g.y*SZ+15, 10, 0, Math.PI*2); ctx.fill();
+  });
+  if (over) {
+    ctx.fillStyle = 'rgba(7,12,23,0.72)'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 24px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(map.flat().some(x => x === '.' || x === 'o') ? 'Caught! Click Restart' : 'Maze Cleared! Click Restart', 225, 195);
+  }
+}
+setInterval(() => { tick++; step(); draw(); }, 185);
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  if (k === 'arrowup' || k === 'w') { ndx = 0; ndy = -1; }
+  if (k === 'arrowdown' || k === 's') { ndx = 0; ndy = 1; }
+  if (k === 'arrowleft' || k === 'a') { ndx = -1; ndy = 0; }
+  if (k === 'arrowright' || k === 'd') { ndx = 1; ndy = 0; }
+});
+document.getElementById('rst').addEventListener('click', reset);
+reset(); draw();
+</script>
+</body>
+</html>

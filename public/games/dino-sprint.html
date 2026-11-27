@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Canyon Runner</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:720px;display:flex;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:720px;min-height:0}
+  canvas{width:100%;height:100%;background:#0a1122;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer}
+  .ov{position:absolute;inset:0;background:rgba(10,17,34,.82);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Distance: <strong id="sc">0</strong>m</span><span>Best: <strong id="best">0</strong>m</span></div>
+  <div class="stage">
+    <canvas id="c" width="720" height="400"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Canyon Runner</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Press Space, Up, or Click to leap over canyon barriers and flying drones.</p>
+      <button id="go" type="button">Start Run</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+const GROUND = 320, KEY = 'th_canyon_best';
+let best = Number(localStorage.getItem(KEY) || 0); document.getElementById('best').textContent = best;
+let py = GROUND, vy = 0, obs = [], score = 0, spd = 5.5, spawnT = 60, state = 'MENU', jumps = 0;
+
+function start() {
+  py = GROUND; vy = 0; obs = []; score = 0; spd = 5.5; spawnT = 40; jumps = 0;
+  document.getElementById('sc').textContent = 0; state = 'PLAY'; ov.hidden = true;
+}
+function jump() {
+  if (state === 'MENU') start();
+  if (state === 'PLAY' && jumps < 2) { vy = -11.5; jumps++; }
+}
+function loop() {
+  if (state === 'PLAY') {
+    score++; spd = 5.5 + Math.min(7, score / 280);
+    if (score % 4 === 0) {
+      const m = Math.floor(score / 4);
+      document.getElementById('sc').textContent = m;
+      if (m > best) { best = m; document.getElementById('best').textContent = best; localStorage.setItem(KEY, best); }
+    }
+    vy += 0.6; py += vy;
+    if (py >= GROUND) { py = GROUND; vy = 0; jumps = 0; }
+    spawnT--;
+    if (spawnT <= 0) {
+      const fly = Math.random() < 0.25;
+      obs.push({ x: c.width + 20, y: fly ? GROUND - 66 : GROUND - 38, w: fly ? 32 : 24 + Math.random() * 14, h: fly ? 22 : 38, fly });
+      spawnT = 48 + Math.random() * 48;
+    }
+    obs.forEach(o => o.x -= spd);
+    obs = obs.filter(o => o.x > -60);
+    for (const o of obs) {
+      if (84 < o.x + o.w && 114 > o.x && py - 38 < o.y + o.h && py > o.y) {
+        state = 'OVER';
+        document.getElementById('ov-t').textContent = 'Wiped Out!';
+        document.getElementById('ov-p').textContent = `You ran ${Math.floor(score / 4)}m.`;
+        document.getElementById('go').textContent = 'Run Again';
+        ov.hidden = false;
+      }
+    }
+  }
+  ctx.fillStyle = '#0a1122'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, GROUND); ctx.lineTo(c.width, GROUND); ctx.stroke();
+  ctx.fillStyle = '#38bdf8'; ctx.fillRect(84, py - 40, 30, 40);
+  ctx.fillStyle = '#fde047'; ctx.fillRect(102, py - 32, 8, 6);
+  obs.forEach(o => { ctx.fillStyle = o.fly ? '#a855f7' : '#f43f5e'; ctx.fillRect(o.x, o.y, o.w, o.h); });
+  requestAnimationFrame(loop);
+}
+document.getElementById('go').addEventListener('click', start);
+c.addEventListener('pointerdown', jump);
+document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w') { e.preventDefault(); jump(); } });
+loop();
+</script>
+</body>
+</html>

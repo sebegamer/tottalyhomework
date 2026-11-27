@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chroma Sequence</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:14px;gap:14px;align-items:center;justify-content:center}
+  .hud{width:100%;max-width:400px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .pads{width:100%;max-width:360px;aspect-ratio:1/1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pad{border-radius:16px;border:2px solid rgba(255,255,255,.14);opacity:0.65;cursor:pointer;transition:opacity 100ms,transform 100ms}
+  .pad.lit{opacity:1;transform:scale(1.03);box-shadow:0 0 26px currentColor}
+  button.go{background:#f59e0b;color:#0f172a;border:0;border-radius:7px;padding:7px 14px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Round: <strong id="rd">0</strong> · Best: <strong id="best">0</strong></span><button id="go" class="go" type="button">Start</button></div>
+  <div id="msg" style="font-size:13px;color:#cbd5e1">Press Start and repeat the glowing sequence.</div>
+  <div class="pads" id="pads"></div>
+</div>
+<script>
+const PADS = [
+  { c: '#22c55e', f: 329.6 }, { c: '#ef4444', f: 261.6 },
+  { c: '#f59e0b', f: 392.0 }, { c: '#38bdf8', f: 493.9 }
+];
+const KEY = 'th_chroma_best'; let best = Number(localStorage.getItem(KEY) || 0);
+document.getElementById('best').textContent = best;
+let seq = [], userIdx = 0, locked = true, audio = null;
+
+const padsEl = document.getElementById('pads');
+const els = PADS.map((p, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'pad';
+  b.style.background = p.c; b.style.color = p.c;
+  b.addEventListener('click', () => handleTap(i));
+  padsEl.appendChild(b);
+  return b;
+});
+
+function tone(i) {
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = PADS[i].f; g.gain.setValueAtTime(0.1, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.22);
+    o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.24);
+  } catch {}
+}
+function flash(i, ms = 320) {
+  els[i].classList.add('lit'); tone(i);
+  setTimeout(() => els[i].classList.remove('lit'), ms);
+}
+function nextRound() {
+  locked = true; userIdx = 0;
+  seq.push(Math.floor(Math.random() * 4));
+  document.getElementById('rd').textContent = seq.length;
+  document.getElementById('msg').textContent = 'Watch the pattern...';
+  seq.forEach((p, idx) => setTimeout(() => flash(p, 280), 420 * (idx + 1)));
+  setTimeout(() => { locked = false; document.getElementById('msg').textContent = 'Your turn!'; }, 420 * (seq.length + 1));
+}
+function handleTap(i) {
+  if (locked) return;
+  flash(i, 180);
+  if (i !== seq[userIdx]) {
+    locked = true;
+    document.getElementById('msg').textContent = `Wrong pad at round ${seq.length}. Press Start to try again.`;
+    return;
+  }
+  userIdx++;
+  if (userIdx === seq.length) {
+    if (seq.length > best) { best = seq.length; document.getElementById('best').textContent = best; localStorage.setItem(KEY, best); }
+    locked = true;
+    setTimeout(nextRound, 550);
+  }
+}
+document.getElementById('go').addEventListener('click', () => { seq = []; nextRound(); });
+</script>
+</body>
+</html>

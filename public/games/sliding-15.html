@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>15 Tile Shuffle</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:14px;gap:14px;align-items:center;justify-content:center}
+  .hud{width:100%;max-width:400px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .grid{width:100%;max-width:380px;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .tile{border-radius:10px;background:#1e293b;border:1px solid rgba(255,255,255,.14);color:#f8fafc;font-size:24px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .tile.ok{background:#132a2e;border-color:rgba(16,185,129,.45);color:#34d399}
+  .tile.empty{background:#09101d;border-color:transparent;cursor:default}
+  button.go{background:#f59e0b;color:#0f172a;border:0;border-radius:7px;padding:7px 14px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud"><span>Moves: <strong id="mv">0</strong> · <span id="st">Order 1–15</span></span><button id="shuf" class="go" type="button">Shuffle</button></div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+let tiles = [], moves = 0;
+
+function shuffle() {
+  tiles = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0];
+  let empty = 15;
+  for (let i = 0; i < 160; i++) {
+    const r = Math.floor(empty / 4), c = empty % 4;
+    const nbrs = [];
+    if (r > 0) nbrs.push(empty - 4);
+    if (r < 3) nbrs.push(empty + 4);
+    if (c > 0) nbrs.push(empty - 1);
+    if (c < 3) nbrs.push(empty + 1);
+    const pick = nbrs[Math.floor(Math.random() * nbrs.length)];
+    [tiles[empty], tiles[pick]] = [tiles[pick], tiles[empty]];
+    empty = pick;
+  }
+  moves = 0; document.getElementById('mv').textContent = 0;
+  document.getElementById('st').textContent = 'Order 1–15';
+  render();
+}
+
+function slide(idx) {
+  const empty = tiles.indexOf(0);
+  const r1 = Math.floor(idx / 4), c1 = idx % 4;
+  const r2 = Math.floor(empty / 4), c2 = empty % 4;
+  if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return;
+  [tiles[idx], tiles[empty]] = [tiles[empty], tiles[idx]];
+  moves++; document.getElementById('mv').textContent = moves;
+  if (tiles.slice(0, 15).every((v, i) => v === i + 1)) {
+    document.getElementById('st').textContent = 'Solved!';
+  }
+  render();
+}
+
+function render() {
+  const g = document.getElementById('grid');
+  g.replaceChildren();
+  tiles.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile' + (v === 0 ? ' empty' : v === i + 1 ? ' ok' : '');
+    b.textContent = v || '';
+    if (v !== 0) b.addEventListener('click', () => slide(i));
+    g.appendChild(b);
+  });
+}
+document.getElementById('shuf').addEventListener('click', shuffle);
+document.addEventListener('keydown', (e) => {
+  const empty = tiles.indexOf(0), r = Math.floor(empty / 4), c = empty % 4;
+  if (e.key === 'ArrowUp' && r < 3) slide(empty + 4);
+  if (e.key === 'ArrowDown' && r > 0) slide(empty - 4);
+  if (e.key === 'ArrowLeft' && c < 3) slide(empty + 1);
+  if (e.key === 'ArrowRight' && c > 0) slide(empty - 1);
+});
+shuffle();
+</script>
+</body>
+</html>

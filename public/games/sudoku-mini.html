@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sudoku 9x9</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center;justify-content:center}
+  .hud{width:100%;max-width:420px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;font-size:13px}
+  .hud strong{color:#f59e0b}
+  .board{width:100%;max-width:396px;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(9,1fr);background:#1e293b;border:2px solid #94a3b8}
+  .cell{background:#0f172a;border:1px solid rgba(255,255,255,.09);color:#38bdf8;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .cell.fixed{color:#f8fafc;background:#131d31}
+  .cell.sel{outline:2px solid #f59e0b;z-index:2;background:#1e293b}
+  .cell.bad{color:#f87171}
+  .cell.b-r{border-right:2px solid #94a3b8}
+  .cell.b-b{border-bottom:2px solid #94a3b8}
+  .nums{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:420px}
+  button.n{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:8px 12px;font-weight:700;cursor:pointer}
+  button.n:hover{border-color:#f59e0b}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <span>Mistakes: <strong id="mis">0</strong> · <span id="msg">Fill 1–9</span></span>
+    <button class="n" id="new-btn" type="button">New Board</button>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="nums" id="nums"></div>
+</div>
+<script>
+let sol = [], grid = [], fixed = [], sel = -1, mistakes = 0;
+
+function makeBoard() {
+  const base = [1,2,3,4,5,6,7,8,9];
+  const shuf = [...base].sort(() => Math.random() - 0.5);
+  sol = Array(81).fill(0);
+  const shifts = [0,3,6,1,4,7,2,5,8];
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+    sol[r * 9 + c] = shuf[(c + shifts[r]) % 9];
+  }
+  grid = [...sol];
+  fixed = Array(81).fill(true);
+  const idxs = Array.from({length: 81}, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 42);
+  idxs.forEach(i => { grid[i] = 0; fixed[i] = false; });
+  sel = fixed.findIndex(f => !f); mistakes = 0;
+  document.getElementById('mis').textContent = 0;
+  document.getElementById('msg').textContent = 'Fill 1–9';
+  render();
+}
+
+function render() {
+  const b = document.getElementById('board');
+  b.replaceChildren();
+  for (let i = 0; i < 81; i++) {
+    const r = Math.floor(i / 9), c = i % 9;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cell' + (fixed[i] ? ' fixed' : '') + (i === sel ? ' sel' : '') +
+      (grid[i] && grid[i] !== sol[i] ? ' bad' : '') +
+      (c === 2 || c === 5 ? ' b-r' : '') + (r === 2 || r === 5 ? ' b-b' : '');
+    btn.textContent = grid[i] || '';
+    btn.addEventListener('click', () => { sel = i; render(); });
+    b.appendChild(btn);
+  }
+}
+
+function enterNum(v) {
+  if (sel < 0 || fixed[sel]) return;
+  grid[sel] = v;
+  if (v !== 0 && v !== sol[sel]) {
+    mistakes++; document.getElementById('mis').textContent = mistakes;
+  }
+  if (grid.every((x, i) => x === sol[i])) document.getElementById('msg').textContent = 'Solved!';
+  render();
+}
+
+const nums = document.getElementById('nums');
+for (let n = 1; n <= 9; n++) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'n'; b.textContent = n;
+  b.addEventListener('click', () => enterNum(n));
+  nums.appendChild(b);
+}
+const clr = document.createElement('button'); clr.type = 'button'; clr.className = 'n'; clr.textContent = 'Clr';
+clr.addEventListener('click', () => enterNum(0));
+nums.appendChild(clr);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key >= '1' && e.key <= '9') enterNum(Number(e.key));
+  if (e.key === 'Backspace' || e.key === '0') enterNum(0);
+});
+document.getElementById('new-btn').addEventListener('click', makeBoard);
+makeBoard();
+</script>
+</body>
+</html>

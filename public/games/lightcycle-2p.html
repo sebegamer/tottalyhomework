@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyber Cycle 2P</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 100%; height: 100%; overflow: hidden;
+        background: #050710; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .hud {
+        width: min(720px, 95vw); display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 8px 12px; margin-bottom: 8px;
+        background: #0d1323; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+      }
+      .p1 { color: #22d3ee; } .p2 { color: #f472b6; }
+      .btns { display: flex; gap: 6px; }
+      button {
+        background: #1a233a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+      }
+      button.active { background: #22d3ee; color: #050710; border-color: #22d3ee; }
+      canvas {
+        width: min(720px, 95vw); height: min(460px, 76vh);
+        background: #060913; border: 1px solid rgba(244,114,182,0.3); border-radius: 12px;
+      }
+      .tip { margin-top: 6px; font-size: 12px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span class="p1">P1 Cyan: <span id="s1">0</span></span>
+      <span id="msg">Cut off your rival's light trail!</span>
+      <span class="p2">P2 Pink: <span id="s2">0</span></span>
+      <div class="btns">
+        <button id="modeBtn" type="button">Mode: 2P Local</button>
+        <button id="nextBtn" type="button">New Round</button>
+      </div>
+    </div>
+    <canvas id="c" width="720" height="460"></canvas>
+    <div class="tip">P1: W A S D · P2: Arrow Keys · Space: Next Round</div>
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const s1El = document.getElementById('s1');
+      const s2El = document.getElementById('s2');
+      const msgEl = document.getElementById('msg');
+      const modeBtn = document.getElementById('modeBtn');
+      const nextBtn = document.getElementById('nextBtn');
+
+      const CELL = 8;
+      const COLS = canvas.width / CELL;
+      const ROWS = canvas.height / CELL;
+      let grid = [];
+      let p1, p2, alive = true, vsCpu = false;
+      let scores = [0, 0];
+
+      function initRound() {
+        grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        p1 = { x: 14, y: Math.floor(ROWS / 2), dx: 1, dy: 0, ndx: 1, ndy: 0, id: 1, color: '#22d3ee' };
+        p2 = { x: COLS - 15, y: Math.floor(ROWS / 2), dx: -1, dy: 0, ndx: -1, ndy: 0, id: 2, color: '#f472b6' };
+        grid[p1.y][p1.x] = 1;
+        grid[p2.y][p2.x] = 2;
+        alive = true;
+        msgEl.textContent = vsCpu ? 'P1 vs Cyber Bot' : '2P Cyber Cycle Duel';
+      }
+
+      modeBtn.addEventListener('click', () => {
+        vsCpu = !vsCpu;
+        modeBtn.textContent = vsCpu ? 'Mode: vs Bot' : 'Mode: 2P Local';
+        modeBtn.classList.toggle('active', vsCpu);
+        scores = [0, 0]; s1El.textContent = '0'; s2El.textContent = '0';
+        initRound();
+      });
+      nextBtn.addEventListener('click', initRound);
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+        if (e.code === 'Space' && !alive) { initRound(); return; }
+        if (e.code === 'KeyW' && p1.dy !== 1) { p1.ndx = 0; p1.ndy = -1; }
+        if (e.code === 'KeyS' && p1.dy !== -1) { p1.ndx = 0; p1.ndy = 1; }
+        if (e.code === 'KeyA' && p1.dx !== 1) { p1.ndx = -1; p1.ndy = 0; }
+        if (e.code === 'KeyD' && p1.dx !== -1) { p1.ndx = 1; p1.ndy = 0; }
+        if (!vsCpu) {
+          if (e.code === 'ArrowUp' && p2.dy !== 1) { p2.ndx = 0; p2.ndy = -1; }
+          if (e.code === 'ArrowDown' && p2.dy !== -1) { p2.ndx = 0; p2.ndy = 1; }
+          if (e.code === 'ArrowLeft' && p2.dx !== 1) { p2.ndx = -1; p2.ndy = 0; }
+          if (e.code === 'ArrowRight' && p2.dx !== -1) { p2.ndx = 1; p2.ndy = 0; }
+        }
+      });
+
+      function isBlocked(x, y) {
+        return x < 0 || x >= COLS || y < 0 || y >= ROWS || grid[y][x] !== 0;
+      }
+
+      function cpuTurn() {
+        const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => !(dx === -p2.dx && dy === -p2.dy));
+        let best = dirs[0], bestScore = -1;
+        for (const [dx, dy] of dirs) {
+          let steps = 0;
+          let cx = p2.x + dx, cy = p2.y + dy;
+          while (steps < 14 && !isBlocked(cx, cy)) {
+            steps++; cx += dx; cy += dy;
+          }
+          const score = steps + Math.random() * 0.6;
+          if (score > bestScore) { bestScore = score; best = [dx, dy]; }
+        }
+        p2.ndx = best[0]; p2.ndy = best[1];
+      }
+
+      function step() {
+        if (!alive) return;
+        if (vsCpu) cpuTurn();
+        p1.dx = p1.ndx; p1.dy = p1.ndy;
+        p2.dx = p2.ndx; p2.dy = p2.ndy;
+        p1.x += p1.dx; p1.y += p1.dy;
+        p2.x += p2.dx; p2.y += p2.dy;
+
+        const c1 = isBlocked(p1.x, p1.y);
+        const c2 = isBlocked(p2.x, p2.y);
+        const headOn = p1.x === p2.x && p1.y === p2.y;
+
+        if (headOn || (c1 && c2)) {
+          alive = false;
+          msgEl.textContent = 'Double Crash! Press Space';
+        } else if (c1) {
+          alive = false;
+          scores[1]++; s2El.textContent = String(scores[1]);
+          msgEl.textContent = 'P2 Pink Wins Round! (Space)';
+        } else if (c2) {
+          alive = false;
+          scores[0]++; s1El.textContent = String(scores[0]);
+          msgEl.textContent = 'P1 Cyan Wins Round! (Space)';
+        } else {
+          grid[p1.y][p1.x] = 1;
+          grid[p2.y][p2.x] = 2;
+        }
+      }
+
+      function draw() {
+        ctx.fillStyle = '#060913';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const v = grid[r][c];
+            if (!v) continue;
+            ctx.fillStyle = v === 1 ? '#22d3ee' : '#f472b6';
+            ctx.fillRect(c * CELL, r * CELL, CELL - 1, CELL - 1);
+          }
+        }
+      }
+
+      initRound();
+      setInterval(() => {
+        step();
+        draw();
+      }, 65);
+    </script>
+  </body>
+</html>

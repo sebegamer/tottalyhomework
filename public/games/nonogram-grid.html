@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Picross Nonogram</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:12px;align-items:center;justify-content:center}
+  .hud{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:13px}
+  button.btn{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 12px;font-weight:600;cursor:pointer}
+  button.btn.on{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  .nono{display:grid;grid-template-columns:68px repeat(6,44px);grid-template-rows:68px repeat(6,44px);gap:4px}
+  .clue{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8;text-align:center;line-height:1.15}
+  .cell{background:#111a2e;border:1px solid rgba(255,255,255,.12);border-radius:6px;cursor:pointer;font-size:16px;font-weight:800;color:#64748b}
+  .cell.fill{background:#38bdf8;border-color:#7dd3fc}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <span id="st">Match row & column clues</span>
+    <div style="display:flex;gap:6px">
+      <button id="mark-btn" class="btn" type="button">Mode: Fill</button>
+      <button id="new-btn" class="btn" type="button">New Grid</button>
+    </div>
+  </div>
+  <div class="nono" id="nono"></div>
+</div>
+<script>
+const N = 6;
+let sol = [], board = [], markMode = false, won = false;
+
+function runs(arr) {
+  const out = []; let c = 0;
+  arr.forEach(v => { if (v) c++; else if (c) { out.push(c); c = 0; } });
+  if (c) out.push(c);
+  return out.length ? out : [0];
+}
+function newPuzzle() {
+  sol = Array.from({length: N}, () => Array.from({length: N}, () => Math.random() < 0.56 ? 1 : 0));
+  board = Array.from({length: N}, () => Array(N).fill(0)); // 0=empty,1=fill,2=X
+  won = false;
+  document.getElementById('st').textContent = 'Match row & column clues';
+  render();
+}
+function checkWin() {
+  for (let r = 0; r < N; r++) {
+    if (runs(board[r].map(v => v === 1)).join(',') !== runs(sol[r]).join(',')) return false;
+  }
+  for (let c = 0; c < N; c++) {
+    if (runs(board.map(r => r[c] === 1)).join(',') !== runs(sol.map(r => r[c])).join(',')) return false;
+  }
+  return true;
+}
+function render() {
+  const g = document.getElementById('nono'); g.replaceChildren();
+  g.appendChild(document.createElement('div'));
+  for (let c = 0; c < N; c++) {
+    const d = document.createElement('div'); d.className = 'clue';
+    d.textContent = runs(sol.map(r => r[c])).join('\n');
+    d.style.whiteSpace = 'pre-line';
+    g.appendChild(d);
+  }
+  for (let r = 0; r < N; r++) {
+    const rc = document.createElement('div'); rc.className = 'clue';
+    rc.textContent = runs(sol[r]).join(' ');
+    g.appendChild(rc);
+    for (let c = 0; c < N; c++) {
+      const b = document.createElement('button'); b.type = 'button';
+      const val = board[r][c];
+      b.className = 'cell' + (val === 1 ? ' fill' : '');
+      b.textContent = val === 2 ? '×' : '';
+      b.addEventListener('click', () => {
+        if (won) return;
+        const target = markMode ? 2 : 1;
+        board[r][c] = board[r][c] === target ? 0 : target;
+        if (checkWin()) { won = true; document.getElementById('st').textContent = 'Picture Complete!'; }
+        render();
+      });
+      g.appendChild(b);
+    }
+  }
+}
+document.getElementById('mark-btn').addEventListener('click', (e) => {
+  markMode = !markMode;
+  e.target.textContent = markMode ? 'Mode: Mark ×' : 'Mode: Fill';
+  e.target.classList.toggle('on', markMode);
+});
+document.getElementById('new-btn').addEventListener('click', newPuzzle);
+newPuzzle();
+</script>
+</body>
+</html>

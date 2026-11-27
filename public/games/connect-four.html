@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connect Four 2P</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 100%; height: 100%; overflow: hidden;
+        background: #070b16; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .hud {
+        width: min(560px, 95vw); display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 10px 14px; margin-bottom: 12px;
+        background: #0f1628; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+      }
+      button {
+        background: #1a233a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+      }
+      button.active { background: #f59e0b; color: #07090e; border-color: #f59e0b; }
+      .board {
+        display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+        padding: 14px; border-radius: 16px;
+        background: #172554; border: 2px solid #3b82f6;
+        width: min(520px, 92vw); aspect-ratio: 7 / 6;
+      }
+      .cell {
+        border-radius: 50%; background: #070b16; border: 2px solid rgba(255,255,255,0.08);
+        cursor: pointer; transition: transform 120ms ease, background-color 140ms ease;
+      }
+      .cell:hover { border-color: rgba(255,255,255,0.35); }
+      .cell.p1 { background: #ef4444; border-color: #fca5a5; }
+      .cell.p2 { background: #facc15; border-color: #fef08a; }
+      .cell.win { box-shadow: 0 0 0 3px #10b981; transform: scale(1.06); }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span id="turn">Red (P1) Turn</span>
+      <div>
+        <button id="modeBtn" type="button">Mode: 2P Local</button>
+        <button id="resetBtn" type="button">New Game</button>
+      </div>
+    </div>
+    <div id="board" class="board"></div>
+    <script>
+      const ROWS = 6, COLS = 7;
+      const boardEl = document.getElementById('board');
+      const turnEl = document.getElementById('turn');
+      const modeBtn = document.getElementById('modeBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      let grid = [], turn = 1, over = false, vsCpu = false, winCells = [];
+
+      function init() {
+        grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        turn = 1; over = false; winCells = [];
+        turnEl.textContent = 'Red (P1) Turn';
+        render();
+      }
+
+      function checkWin(r, c, p) {
+        const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+        for (const [dr, dc] of dirs) {
+          const line = [[r, c]];
+          for (const s of [1, -1]) {
+            let nr = r + dr * s, nc = c + dc * s;
+            while (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && grid[nr][nc] === p) {
+              line.push([nr, nc]);
+              nr += dr * s; nc += dc * s;
+            }
+          }
+          if (line.length >= 4) return line;
+        }
+        return null;
+      }
+
+      function drop(col) {
+        if (over) return;
+        let row = -1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (grid[r][col] === 0) { row = r; break; }
+        }
+        if (row === -1) return;
+        grid[row][col] = turn;
+        const win = checkWin(row, col, turn);
+        if (win) {
+          over = true;
+          winCells = win;
+          turnEl.textContent = turn === 1 ? 'Red (P1) Wins!' : (vsCpu ? 'Bot Wins!' : 'Yellow (P2) Wins!');
+          render();
+          return;
+        }
+        if (grid[0].every((v) => v !== 0)) {
+          over = true;
+          turnEl.textContent = 'Draw Board!';
+          render();
+          return;
+        }
+        turn = turn === 1 ? 2 : 1;
+        turnEl.textContent = turn === 1 ? 'Red (P1) Turn' : (vsCpu ? 'Bot Thinking...' : 'Yellow (P2) Turn');
+        render();
+        if (vsCpu && turn === 2 && !over) {
+          setTimeout(cpuPlay, 320);
+        }
+      }
+
+      function cpuPlay() {
+        const valid = [];
+        for (let c = 0; c < COLS; c++) if (grid[0][c] === 0) valid.push(c);
+        if (!valid.length) return;
+        for (const c of valid) {
+          let r = ROWS - 1; while (grid[r][c] !== 0) r--;
+          grid[r][c] = 2;
+          if (checkWin(r, c, 2)) { grid[r][c] = 0; drop(c); return; }
+          grid[r][c] = 0;
+        }
+        for (const c of valid) {
+          let r = ROWS - 1; while (grid[r][c] !== 0) r--;
+          grid[r][c] = 1;
+          if (checkWin(r, c, 1)) { grid[r][c] = 0; drop(c); return; }
+          grid[r][c] = 0;
+        }
+        drop(valid.includes(3) ? 3 : valid[Math.floor(Math.random() * valid.length)]);
+      }
+
+      function render() {
+        boardEl.replaceChildren();
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = 'cell';
+            if (grid[r][c] === 1) cell.classList.add('p1');
+            if (grid[r][c] === 2) cell.classList.add('p2');
+            if (winCells.some(([wr, wc]) => wr === r && wc === c)) cell.classList.add('win');
+            cell.addEventListener('click', () => {
+              if (vsCpu && turn === 2) return;
+              drop(c);
+            });
+            boardEl.appendChild(cell);
+          }
+        }
+      }
+
+      modeBtn.addEventListener('click', () => {
+        vsCpu = !vsCpu;
+        modeBtn.textContent = vsCpu ? 'Mode: vs Bot' : 'Mode: 2P Local';
+        modeBtn.classList.toggle('active', vsCpu);
+        init();
+      });
+      resetBtn.addEventListener('click', init);
+      init();
+    </script>
+  </body>
+</html>

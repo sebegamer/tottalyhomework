@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Star Squadron</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .hud{width:100%;max-width:680px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .stage{position:relative;flex:1;width:100%;max-width:680px;min-height:0}
+  canvas{width:100%;height:100%;background:#060a14;border:1px solid rgba(255,255,255,.12);border-radius:10px}
+  .ov{position:absolute;inset:0;background:rgba(6,10,20,.84);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}
+  .ov[hidden]{display:none}
+  button{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <span>Score: <strong id="sc">0</strong> · Wave: <strong id="wv">1</strong> · Lives: <strong id="lv">3</strong></span>
+    <span>A/D or Arrows + Space</span>
+  </div>
+  <div class="stage">
+    <canvas id="c" width="680" height="440"></canvas>
+    <div id="ov" class="ov">
+      <h2 id="ov-t" style="margin:0">Star Squadron</h2>
+      <p id="ov-p" style="margin:0;color:#cbd5e1">Move with Left/Right or A/D and press Space to blast incoming alien formations.</p>
+      <button id="go" type="button">Start Wave</button>
+    </div>
+  </div>
+</div>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d'), ov = document.getElementById('ov');
+let px = 340, score = 0, wave = 1, lives = 3, bullets = [], eBullets = [], aliens = [], dir = 1, state = 'MENU', cool = 0;
+const keys = {};
+
+function spawnWave() {
+  aliens = []; bullets = []; eBullets = [];
+  for (let r = 0; r < 4; r++) {
+    for (let col = 0; col < 9; col++) {
+      aliens.push({ x: 85 + col * 58, y: 46 + r * 38, color: ['#f43f5e','#f59e0b','#38bdf8','#34d399'][r] });
+    }
+  }
+  dir = 1;
+}
+function startGame() {
+  px = 340; score = 0; wave = 1; lives = 3;
+  document.getElementById('sc').textContent = 0;
+  document.getElementById('wv').textContent = 1;
+  document.getElementById('lv').textContent = 3;
+  spawnWave(); state = 'PLAY'; ov.hidden = true;
+}
+function loop() {
+  if (state === 'PLAY') {
+    if (keys['arrowleft'] || keys['a']) px -= 5.5;
+    if (keys['arrowright'] || keys['d']) px += 5.5;
+    px = Math.max(24, Math.min(c.width - 24, px));
+    if (cool > 0) cool--;
+    if (keys[' '] && cool === 0) { bullets.push({ x: px, y: c.height - 42 }); cool = 14; }
+
+    bullets.forEach(b => b.y -= 8);
+    bullets = bullets.filter(b => b.y > -10);
+    eBullets.forEach(b => b.y += 4.5);
+    eBullets = eBullets.filter(b => b.y < c.height + 10);
+
+    let hitEdge = false;
+    const spd = (1.1 + wave * 0.25) * dir;
+    aliens.forEach(a => { a.x += spd; if (a.x < 24 || a.x > c.width - 24) hitEdge = true; });
+    if (hitEdge) { dir *= -1; aliens.forEach(a => { a.y += 14; }); }
+
+    if (aliens.length && Math.random() < 0.03 + wave * 0.006) {
+      const shooter = aliens[Math.floor(Math.random() * aliens.length)];
+      eBullets.push({ x: shooter.x, y: shooter.y + 12 });
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      const hitIdx = aliens.findIndex(a => Math.abs(a.x - b.x) < 16 && Math.abs(a.y - b.y) < 12);
+      if (hitIdx !== -1) {
+        aliens.splice(hitIdx, 1); bullets.splice(i, 1);
+        score += 25; document.getElementById('sc').textContent = score;
+      }
+    }
+
+    for (let i = eBullets.length - 1; i >= 0; i--) {
+      const b = eBullets[i];
+      if (Math.abs(b.x - px) < 18 && b.y > c.height - 40) {
+        eBullets.splice(i, 1); lives--; document.getElementById('lv').textContent = lives;
+        if (lives <= 0) endGame();
+      }
+    }
+    if (aliens.some(a => a.y > c.height - 52)) endGame();
+    if (state === 'PLAY' && aliens.length === 0) {
+      wave++; document.getElementById('wv').textContent = wave; spawnWave();
+    }
+  }
+  ctx.fillStyle = '#060a14'; ctx.fillRect(0, 0, c.width, c.height);
+  aliens.forEach(a => {
+    ctx.fillStyle = a.color;
+    ctx.fillRect(a.x - 13, a.y - 9, 26, 18);
+    ctx.fillStyle = '#060a14';
+    ctx.fillRect(a.x - 7, a.y - 3, 4, 4); ctx.fillRect(a.x + 3, a.y - 3, 4, 4);
+  });
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath(); ctx.moveTo(px, c.height - 44); ctx.lineTo(px - 18, c.height - 18); ctx.lineTo(px + 18, c.height - 18); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fde047'; bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 8, 4, 12));
+  ctx.fillStyle = '#f43f5e'; eBullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 6, 4, 10));
+  requestAnimationFrame(loop);
+}
+function endGame() {
+  state = 'OVER';
+  document.getElementById('ov-t').textContent = 'Fleet Breached!';
+  document.getElementById('ov-p').textContent = `Final Score: ${score} (Wave ${wave}).`;
+  document.getElementById('go').textContent = 'Play Again';
+  ov.hidden = false;
+}
+document.getElementById('go').addEventListener('click', startGame);
+document.addEventListener('keydown', (e) => { if (e.key === ' ') e.preventDefault(); keys[e.key.toLowerCase()] = true; });
+document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+loop();
+</script>
+</body>
+</html>

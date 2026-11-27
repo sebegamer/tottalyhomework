@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Turbo Reflex Pop</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:14px;gap:12px;align-items:center;justify-content:center}
+  .hud{width:100%;max-width:480px;display:flex;justify-content:space-between;align-items:center;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:14px}
+  .hud strong{color:#f59e0b}
+  .grid{width:100%;max-width:480px;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .cell{border-radius:12px;background:#111a2e;border:1px solid rgba(255,255,255,.1);font-size:22px;font-weight:800;color:#0f172a;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 80ms}
+  .cell:active{transform:scale(0.95)}
+  .cell.target{background:#38bdf8}
+  .cell.gold{background:#f59e0b}
+  .cell.bomb{background:#ef4444;color:#fff}
+  button.go{background:#f59e0b;color:#0f172a;border:0;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <span>Score: <strong id="sc">0</strong> · Time: <strong id="tm">30</strong>s · Best: <strong id="best">0</strong></span>
+    <button id="go" class="go" type="button">Start</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const KEY = 'th_reflex_best';
+let best = Number(localStorage.getItem(KEY) || 0); document.getElementById('best').textContent = best;
+let slots = Array(16).fill(''), score = 0, time = 30, playing = false, tickT = null, secT = null;
+const grid = document.getElementById('grid');
+
+for (let i = 0; i < 16; i++) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'cell';
+  b.addEventListener('click', () => {
+    if (!playing || !slots[i]) return;
+    if (slots[i] === 'target') score += 10;
+    else if (slots[i] === 'gold') score += 30;
+    else if (slots[i] === 'bomb') score = Math.max(0, score - 25);
+    slots[i] = '';
+    document.getElementById('sc').textContent = score;
+    if (score > best) { best = score; document.getElementById('best').textContent = best; localStorage.setItem(KEY, best); }
+    render();
+  });
+  grid.appendChild(b);
+}
+function render() {
+  Array.from(grid.children).forEach((el, i) => {
+    const t = slots[i];
+    el.className = 'cell' + (t ? ' ' + t : '');
+    el.textContent = t === 'target' ? '+10' : t === 'gold' ? '+30' : t === 'bomb' ? 'X' : '';
+  });
+}
+function spawn() {
+  slots.fill('');
+  const count = 2 + Math.floor(Math.random() * 2);
+  for (let k = 0; k < count; k++) {
+    const idx = Math.floor(Math.random() * 16);
+    const r = Math.random();
+    slots[idx] = r < 0.18 ? 'bomb' : r < 0.34 ? 'gold' : 'target';
+  }
+  render();
+}
+function start() {
+  clearInterval(tickT); clearInterval(secT);
+  score = 0; time = 30; playing = true;
+  document.getElementById('sc').textContent = 0; document.getElementById('tm').textContent = 30;
+  document.getElementById('go').textContent = 'Restart';
+  spawn();
+  tickT = setInterval(spawn, 750);
+  secT = setInterval(() => {
+    time--; document.getElementById('tm').textContent = time;
+    if (time <= 0) { playing = false; clearInterval(tickT); clearInterval(secT); slots.fill(''); render(); }
+  }, 1000);
+}
+document.getElementById('go').addEventListener('click', start);
+</script>
+</body>
+</html>

@@ -42,6 +42,42 @@
           "type": "object",
           "description": "Map of game ID to integer play count (max 50 entries)."
         },
+        "achievements": {
+          "type": "array",
+          "description": "Bounded list of unlocked achievement IDs earned while signed in (max 30 items)."
+        },
+        "equippedFlair": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]*$",
+          "description": "Currently equipped achievement flair ID displayed on the user's name."
+        },
+        "coins": {
+          "type": "integer",
+          "description": "Spendable arcade and study coins balance (0 to 1,000,000)."
+        },
+        "lifetimeCoins": {
+          "type": "integer",
+          "description": "Cumulative coins earned across sessions (0 to 1,000,000)."
+        },
+        "unlockedThemes": {
+          "type": "array",
+          "description": "Bounded list of unlocked theme IDs purchased with coins (max 20 items)."
+        },
+        "equippedTheme": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]*$",
+          "description": "Currently active visual theme ID."
+        },
+        "hwDone": {
+          "type": "array",
+          "description": "Bounded list of completed homework assignment IDs (max 50 items)."
+        },
+        "quizCorrect": {
+          "type": "integer",
+          "description": "Cumulative count of practice questions answered correctly while signed in."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",

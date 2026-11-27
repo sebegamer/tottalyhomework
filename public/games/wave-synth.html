@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Beat & Synth Lab</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#09101d;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:14px;gap:12px;align-items:center;justify-content:center}
+  .bar{width:100%;max-width:760px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer}
+  button.primary{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  .grid{width:100%;max-width:760px;display:flex;flex-direction:column;gap:8px;background:#111a2e;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px}
+  .row{display:grid;grid-template-columns:72px repeat(16,minmax(0,1fr));gap:4px;align-items:center}
+  .lbl{font-size:12px;font-weight:600;color:#cbd5e1}
+  .pad{height:34px;padding:0;border-radius:6px;background:#0f172a;border:1px solid rgba(255,255,255,.1)}
+  .pad.on{background:#f59e0b;border-color:#fbbf24}
+  .pad.now{outline:2px solid #38bdf8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="play-btn" class="primary" type="button">Play Loop</button>
+      <button id="preset-btn" type="button">Load Groove</button>
+      <button id="clear-btn" type="button">Clear</button>
+    </div>
+    <label style="font-size:12px;display:flex;align-items:center;gap:8px">
+      Tempo <strong id="bpm-val">116</strong> BPM
+      <input id="bpm" type="range" min="80" max="155" value="116" />
+    </label>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const TRACKS = [
+  { name: 'Lead', freq: 523.25, type: 'triangle' },
+  { name: 'Synth', freq: 392.0, type: 'sine' },
+  { name: 'Bass', freq: 130.81, type: 'sawtooth' },
+  { name: 'Snare', freq: 240, type: 'square' },
+  { name: 'Kick', freq: 72, type: 'sine' },
+];
+const STEPS = 16;
+let pat = TRACKS.map(() => Array(STEPS).fill(false));
+let playing = false, step = 0, timer = null, bpm = 116, audio = null;
+
+function loadGroove() {
+  pat = [
+    [1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0].map(Boolean),
+    [0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,0].map(Boolean),
+    [1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0].map(Boolean),
+    [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1].map(Boolean),
+    [1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0].map(Boolean),
+  ];
+  renderGrid();
+}
+
+function trigger(tIdx) {
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    const tr = TRACKS[tIdx], osc = audio.createOscillator(), g = audio.createGain();
+    osc.type = tr.type;
+    osc.frequency.setValueAtTime(tr.freq, audio.currentTime);
+    if (tIdx === 4) osc.frequency.exponentialRampToValueAtTime(32, audio.currentTime + 0.14);
+    g.gain.setValueAtTime(tIdx >= 3 ? 0.14 : 0.08, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.16);
+    osc.connect(g); g.connect(audio.destination);
+    osc.start(); osc.stop(audio.currentTime + 0.17);
+  } catch {}
+}
+
+const gridEl = document.getElementById('grid');
+function renderGrid() {
+  gridEl.replaceChildren();
+  TRACKS.forEach((tr, ti) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = tr.name;
+    row.appendChild(lbl);
+    for (let s = 0; s < STEPS; s++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pad' + (pat[ti][s] ? ' on' : '') + (playing && s === step ? ' now' : '');
+      b.addEventListener('click', () => { pat[ti][s] = !pat[ti][s]; renderGrid(); });
+      row.appendChild(b);
+    }
+    gridEl.appendChild(row);
+  });
+}
+
+function tick() {
+  if (!playing) return;
+  TRACKS.forEach((_, ti) => { if (pat[ti][step]) trigger(ti); });
+  renderGrid();
+  step = (step + 1) % STEPS;
+  timer = setTimeout(tick, (60 / bpm / 4) * 1000);
+}
+
+document.getElementById('play-btn').addEventListener('click', (e) => {
+  playing = !playing;
+  e.target.textContent = playing ? 'Stop Loop' : 'Play Loop';
+  clearTimeout(timer);
+  if (playing) { step = 0; tick(); } else renderGrid();
+});
+document.getElementById('bpm').addEventListener('input', (e) => {
+  bpm = Number(e.target.value);
+  document.getElementById('bpm-val').textContent = bpm;
+});
+document.getElementById('preset-btn').addEventListener('click', loadGroove);
+document.getElementById('clear-btn').addEventListener('click', () => { pat = TRACKS.map(() => Array(STEPS).fill(false)); renderGrid(); });
+loadGroove();
+</script>
+</body>
+</html>

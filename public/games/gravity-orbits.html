@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Orbit Sandbox</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#060913;color:#f8fafc;font-family:system-ui,sans-serif;overflow:hidden;user-select:none}
+  .wrap{height:100%;display:flex;flex-direction:column;padding:12px;gap:10px;align-items:center}
+  .bar{width:100%;max-width:760px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:#131d31;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;font-size:13px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  button{background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  button.active{background:#f59e0b;color:#0f172a;border-color:#f59e0b}
+  canvas{flex:1;width:100%;max-width:760px;min-height:0;background:#04070f;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:crosshair}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <span>Drag anywhere to fling a planet into orbit · Bodies: <strong id="cnt">0</strong></span>
+    <div class="row">
+      <button id="mass-btn" type="button">Type: Planet</button>
+      <button id="preset-btn" type="button">Solar Preset</button>
+      <button id="clear-btn" type="button">Reset Star</button>
+    </div>
+  </div>
+  <canvas id="c" width="760" height="460"></canvas>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const cntEl = document.getElementById('cnt');
+let bodies = [], dragStart = null, dragNow = null, spawnType = 'planet';
+const COLORS = ['#38bdf8', '#34d399', '#a78bfa', '#fb7185', '#fbbf24'];
+
+function resetSolar() {
+  bodies = [
+    { x: 380, y: 230, vx: 0, vy: 0, m: 2400, r: 18, color: '#f59e0b', fixed: true, trail: [] },
+    { x: 380, y: 120, vx: 4.5, vy: 0, m: 8, r: 6, color: '#38bdf8', trail: [] },
+    { x: 380, y: 65, vx: 3.7, vy: 0, m: 14, r: 8, color: '#34d399', trail: [] },
+  ];
+  cntEl.textContent = bodies.length;
+}
+
+function step() {
+  const G = 1;
+  for (let i = 0; i < bodies.length; i++) {
+    const a = bodies[i];
+    if (a.fixed) continue;
+    for (let j = 0; j < bodies.length; j++) {
+      if (i === j) continue;
+      const b = bodies[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const distSq = Math.max(90, dx * dx + dy * dy);
+      const f = (G * b.m) / distSq;
+      const dist = Math.sqrt(distSq);
+      a.vx += (f * dx) / dist * 0.12;
+      a.vy += (f * dy) / dist * 0.12;
+    }
+  }
+  for (const b of bodies) {
+    if (!b.fixed) {
+      b.x += b.vx; b.y += b.vy;
+      b.trail.push([b.x, b.y]);
+      if (b.trail.length > 65) b.trail.shift();
+    }
+  }
+  bodies = bodies.filter((b) => b.fixed || (b.x > -400 && b.x < 1160 && b.y > -400 && b.y < 860));
+  cntEl.textContent = bodies.length;
+}
+
+function draw() {
+  step();
+  ctx.fillStyle = 'rgba(4, 7, 15, 0.35)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (const b of bodies) {
+    if (b.trail.length > 1) {
+      ctx.strokeStyle = b.color;
+      ctx.globalAlpha = 0.45;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      b.trail.forEach(([tx, ty], i) => (i ? ctx.lineTo(tx, ty) : ctx.moveTo(tx, ty)));
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = b.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  if (dragStart && dragNow) {
+    ctx.strokeStyle = '#f8fafc';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(dragStart.x, dragStart.y);
+    ctx.lineTo(dragNow.x, dragNow.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  requestAnimationFrame(draw);
+}
+
+function pt(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: ((e.clientX - r.left) / r.width) * canvas.width, y: ((e.clientY - r.top) / r.height) * canvas.height };
+}
+canvas.addEventListener('pointerdown', (e) => { dragStart = pt(e); dragNow = dragStart; });
+canvas.addEventListener('pointermove', (e) => { if (dragStart) dragNow = pt(e); });
+window.addEventListener('pointerup', () => {
+  if (!dragStart || !dragNow) return;
+  const vx = (dragStart.x - dragNow.x) * 0.06;
+  const vy = (dragStart.y - dragNow.y) * 0.06;
+  const isStar = spawnType === 'star';
+  bodies.push({
+    x: dragStart.x, y: dragStart.y, vx, vy,
+    m: isStar ? 1600 : 12,
+    r: isStar ? 14 : 6,
+    color: isStar ? '#f59e0b' : COLORS[bodies.length % COLORS.length],
+    trail: [],
+  });
+  dragStart = null; dragNow = null;
+});
+
+document.getElementById('mass-btn').addEventListener('click', (e) => {
+  spawnType = spawnType === 'planet' ? 'star' : 'planet';
+  e.target.textContent = spawnType === 'planet' ? 'Type: Planet' : 'Type: Star';
+});
+document.getElementById('preset-btn').addEventListener('click', resetSolar);
+document.getElementById('clear-btn').addEventListener('click', () => {
+  bodies = [{ x: 380, y: 230, vx: 0, vy: 0, m: 2400, r: 18, color: '#f59e0b', fixed: true, trail: [] }];
+});
+resetSolar();
+draw();
+</script>
+</body>
+</html>

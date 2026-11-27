@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Tank Clash 2P</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 100%; height: 100%; overflow: hidden;
+        background: #060912; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+      }
+      .hud {
+        width: min(760px, 96vw); display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 8px 12px; margin-bottom: 8px;
+        background: #0f1628; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+        font-size: 13px; font-weight: 700;
+      }
+      .p1 { color: #38bdf8; } .p2 { color: #fbbf24; }
+      .btns { display: flex; gap: 6px; }
+      button {
+        background: #1a233a; color: #f8fafc; border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+      }
+      button.active { background: #f59e0b; color: #07090e; border-color: #f59e0b; }
+      canvas {
+        width: min(760px, 96vw); height: min(460px, 76vh);
+        background: #090e1a; border: 1px solid rgba(56,189,248,0.28); border-radius: 12px;
+        display: block;
+      }
+      .tip { margin-top: 6px; font-size: 12px; color: #94a3b8; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span class="p1">P1: <span id="s1">0</span></span>
+      <span id="status">2P Tank Clash — First to 5</span>
+      <span class="p2">P2: <span id="s2">0</span></span>
+      <div class="btns">
+        <button id="modeBtn" type="button">Mode: 2P Local</button>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+    <canvas id="c" width="760" height="460"></canvas>
+    <div class="tip">P1: WASD + Space · P2: Arrow Keys + Enter</div>
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+      const s1El = document.getElementById('s1');
+      const s2El = document.getElementById('s2');
+      const statusEl = document.getElementById('status');
+      const modeBtn = document.getElementById('modeBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      let vsCpu = false;
+      const keys = new Set();
+      let scores = [0, 0];
+      let bullets = [];
+      let walls = [];
+      let roundPause = 0;
+
+      const p1 = { x: 80, y: 230, angle: 0, hp: 3, cd: 0, color: '#38bdf8' };
+      const p2 = { x: 680, y: 230, angle: Math.PI, hp: 3, cd: 0, color: '#fbbf24' };
+
+      function buildWalls() {
+        walls = [
+          { x: 220, y: 90, w: 26, h: 110 },
+          { x: 220, y: 260, w: 26, h: 110 },
+          { x: 514, y: 90, w: 26, h: 110 },
+          { x: 514, y: 260, w: 26, h: 110 },
+          { x: 356, y: 185, w: 48, h: 90 },
+        ];
+      }
+
+      function resetRound() {
+        p1.x = 80; p1.y = 230; p1.angle = 0; p1.hp = 3; p1.cd = 0;
+        p2.x = 680; p2.y = 230; p2.angle = Math.PI; p2.hp = 3; p2.cd = 0;
+        bullets = [];
+        buildWalls();
+      }
+
+      function fullReset() {
+        scores = [0, 0];
+        s1El.textContent = '0';
+        s2El.textContent = '0';
+        statusEl.textContent = vsCpu ? 'P1 vs Bot — First to 5' : '2P Tank Clash — First to 5';
+        resetRound();
+      }
+
+      modeBtn.addEventListener('click', () => {
+        vsCpu = !vsCpu;
+        modeBtn.textContent = vsCpu ? 'Mode: vs Bot' : 'Mode: 2P Local';
+        modeBtn.classList.toggle('active', vsCpu);
+        fullReset();
+      });
+      resetBtn.addEventListener('click', fullReset);
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter'].includes(e.code)) {
+          e.preventDefault();
+        }
+        keys.add(e.code);
+      });
+      window.addEventListener('keyup', (e) => keys.delete(e.code));
+
+      function rectHit(x, y, r, w) {
+        return x + r > w.x && x - r < w.x + w.w && y + r > w.y && y - r < w.y + w.h;
+      }
+
+      function moveTank(t, fwd, turn) {
+        t.angle += turn * 0.065;
+        const nx = t.x + Math.cos(t.angle) * fwd * 2.8;
+        const ny = t.y + Math.sin(t.angle) * fwd * 2.8;
+        const clampedX = Math.max(24, Math.min(canvas.width - 24, nx));
+        const clampedY = Math.max(24, Math.min(canvas.height - 24, ny));
+        if (!walls.some((w) => rectHit(clampedX, t.y, 15, w))) t.x = clampedX;
+        if (!walls.some((w) => rectHit(t.x, clampedY, 15, w))) t.y = clampedY;
+      }
+
+      function fire(t, owner) {
+        if (t.cd > 0) return;
+        t.cd = 20;
+        bullets.push({
+          x: t.x + Math.cos(t.angle) * 20,
+          y: t.y + Math.sin(t.angle) * 20,
+          vx: Math.cos(t.angle) * 6.2,
+          vy: Math.sin(t.angle) * 6.2,
+          bounces: 2,
+          owner,
+          color: t.color,
+        });
+      }
+
+      function update() {
+        if (roundPause > 0) {
+          roundPause--;
+          if (roundPause === 0) resetRound();
+          return;
+        }
+        if (p1.cd > 0) p1.cd--;
+        if (p2.cd > 0) p2.cd--;
+
+        const p1Fwd = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0);
+        const p1Turn = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
+        moveTank(p1, p1Fwd, p1Turn);
+        if (keys.has('Space')) fire(p1, 1);
+
+        if (vsCpu) {
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const target = Math.atan2(dy, dx);
+          let diff = target - p2.angle;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          const turn = Math.max(-1, Math.min(1, diff * 2.2));
+          const dist = Math.hypot(dx, dy);
+          moveTank(p2, dist > 190 ? 0.8 : dist < 110 ? -0.6 : 0.2, turn);
+          if (Math.abs(diff) < 0.28) fire(p2, 2);
+        } else {
+          const p2Fwd = (keys.has('ArrowUp') ? 1 : 0) - (keys.has('ArrowDown') ? 1 : 0);
+          const p2Turn = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+          moveTank(p2, p2Fwd, p2Turn);
+          if (keys.has('Enter')) fire(p2, 2);
+        }
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          const b = bullets[i];
+          const nx = b.x + b.vx;
+          const ny = b.y + b.vy;
+          let hitWall = false;
+          if (nx < 6 || nx > canvas.width - 6) { b.vx *= -1; b.bounces--; hitWall = true; }
+          if (ny < 6 || ny > canvas.height - 6) { b.vy *= -1; b.bounces--; hitWall = true; }
+          for (const w of walls) {
+            if (rectHit(nx, b.y, 4, w)) { b.vx *= -1; b.bounces--; hitWall = true; break; }
+            if (rectHit(b.x, ny, 4, w)) { b.vy *= -1; b.bounces--; hitWall = true; break; }
+          }
+          if (!hitWall) { b.x = nx; b.y = ny; }
+          if (b.bounces < 0) { bullets.splice(i, 1); continue; }
+
+          if (Math.hypot(b.x - p1.x, b.y - p1.y) < 17 && (b.owner === 2 || b.bounces < 2)) {
+            bullets.splice(i, 1);
+            p1.hp--;
+            if (p1.hp <= 0) {
+              scores[1]++; s2El.textContent = String(scores[1]);
+              if (scores[1] >= 5) { statusEl.textContent = 'P2 Wins the Match!'; scores = [0,0]; s1El.textContent='0'; s2El.textContent='0'; }
+              else statusEl.textContent = 'Point P2!';
+              roundPause = 45;
+            }
+            continue;
+          }
+          if (Math.hypot(b.x - p2.x, b.y - p2.y) < 17 && (b.owner === 1 || b.bounces < 2)) {
+            bullets.splice(i, 1);
+            p2.hp--;
+            if (p2.hp <= 0) {
+              scores[0]++; s1El.textContent = String(scores[0]);
+              if (scores[0] >= 5) { statusEl.textContent = 'P1 Wins the Match!'; scores = [0,0]; s1El.textContent='0'; s2El.textContent='0'; }
+              else statusEl.textContent = 'Point P1!';
+              roundPause = 45;
+            }
+          }
+        }
+      }
+
+      function drawTank(t) {
+        ctx.save();
+        ctx.translate(t.x, t.y);
+        ctx.rotate(t.angle);
+        ctx.fillStyle = t.color;
+        ctx.fillRect(-14, -12, 28, 24);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-8, -7, 16, 14);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(4, -3, 18, 6);
+        ctx.restore();
+        for (let i = 0; i < t.hp; i++) {
+          ctx.fillStyle = t.color;
+          ctx.fillRect(t.x - 14 + i * 10, t.y - 22, 8, 4);
+        }
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        for (let x = 0; x < canvas.width; x += 38) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 38) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#475569';
+        for (const w of walls) {
+          ctx.fillRect(w.x, w.y, w.w, w.h);
+          ctx.strokeRect(w.x, w.y, w.w, w.h);
+        }
+        drawTank(p1);
+        drawTank(p2);
+        for (const b of bullets) {
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = b.color;
+          ctx.fill();
+        }
+      }
+
+      function loop() {
+        update();
+        render();
+        requestAnimationFrame(loop);
+      }
+      resetRound();
+      loop();
+    </script>
+  </body>
+</html>

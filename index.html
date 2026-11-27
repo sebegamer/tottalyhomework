@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Totally Homework — Unblocked Browser Games</title>
+    <title>Totally Homework — Student Study Workspace</title>
     <meta
       name="description"
-      content="Totally Homework — instant unblocked browser games ready to play."
+      content="Totally Homework — organize class assignments, study notes, and interactive subject practice."
     />
-    <meta property="og:title" content="Totally Homework — Unblocked Browser Games" />
+    <meta property="og:title" content="Totally Homework — Student Study Workspace" />
     <meta
       property="og:description"
-      content="Totally Homework — instant unblocked browser games ready to play."
+      content="Totally Homework — organize class assignments, study notes, and interactive subject practice."
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -35,7 +35,28 @@
       <div class="header-inner">
         <a href="#" id="brand-link" class="brand-wordmark">Totally Homework</a>
 
-        <nav class="main-nav" aria-label="Game categories">
+        <nav id="hw-nav" class="main-nav" aria-label="Homework subjects">
+          <button type="button" class="nav-link is-active" data-hw-nav="All">
+            All Subjects
+          </button>
+          <button type="button" class="nav-link" data-hw-nav="Math">
+            Math
+          </button>
+          <button type="button" class="nav-link" data-hw-nav="Science">
+            Science
+          </button>
+          <button type="button" class="nav-link" data-hw-nav="History">
+            History
+          </button>
+          <button type="button" class="nav-link" data-hw-nav="English">
+            English
+          </button>
+          <button type="button" class="nav-link" data-hw-nav="CS">
+            CS
+          </button>
+        </nav>
+
+        <nav id="arcade-nav" class="main-nav" hidden aria-label="Game categories">
           <button type="button" class="nav-link is-active" data-nav-category="All">
             All Games
           </button>
@@ -51,9 +72,19 @@
           <button type="button" class="nav-link" data-nav-category="Action">
             Action
           </button>
+          <button type="button" class="nav-link" data-nav-category="Multiplayer">
+            Multiplayer
+          </button>
         </nav>
 
         <div class="header-actions">
+          <button type="button" id="header-coins-btn" class="btn-secondary header-coins-btn" aria-label="Coins and Theme Studio">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v10M9.5 10.5c0-1.1 1.1-2 2.5-2s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2 2.5-.9 2.5-2"/>
+            </svg>
+            <span id="header-coins-value" class="tabular-nums">0 Coins</span>
+          </button>
           <button type="button" id="auth-btn" class="btn-primary">
             Sign In
           </button>
@@ -62,6 +93,137 @@
     </header>
 
     <main id="main-container" class="main-container">
+      <!-- Homework Portal View (Default) -->
+      <div id="homework-view" class="view-stack">
+        <section class="hero-section">
+          <div class="hero-left">
+            <div class="hero-copy">
+              <h1 class="hero-headline">Stay focused, finish every assignment.</h1>
+              <p class="hero-lead">
+                Review upcoming classwork by subject, check off completed tasks, and sharpen core concepts with interactive practice questions.
+              </p>
+            </div>
+
+            <div class="hero-cta-row">
+              <button type="button" id="hw-start-drill-btn" class="btn-primary btn-lg">
+                Start Practice Drill
+              </button>
+              <a href="#hw-toolbar" class="btn-secondary btn-lg">
+                Browse Assignments
+              </a>
+            </div>
+
+            <div class="hero-metrics" aria-label="Study summary">
+              <div class="metric-item">
+                <span id="hw-metric-total" class="metric-value tabular-nums">25</span>
+                <span class="metric-label">Active assignments</span>
+              </div>
+              <div class="metric-divider" aria-hidden="true"></div>
+              <div class="metric-item">
+                <span class="metric-value tabular-nums">5</span>
+                <span class="metric-label">Grade levels</span>
+              </div>
+              <div class="metric-divider" aria-hidden="true"></div>
+              <div class="metric-item">
+                <span id="hw-metric-done" class="metric-value tabular-nums">0</span>
+                <span class="metric-label">Completed</span>
+              </div>
+            </div>
+          </div>
+
+          <aside class="hero-spotlight" aria-label="Quick study practice">
+            <div id="practice-card" class="practice-card">
+              <div class="practice-top">
+                <span id="practice-meta" class="practice-meta">Math · 3rd Grade · Question 1 of 5</span>
+                <span id="practice-score" class="practice-score tabular-nums">Score: 0 / 0</span>
+              </div>
+              <h2 id="practice-question" class="practice-question">
+                What is 7 × 8 + 14?
+              </h2>
+              <div id="practice-options" class="practice-options"></div>
+              <div id="practice-feedback" class="practice-feedback" hidden aria-live="polite"></div>
+              <div class="practice-actions">
+                <button type="button" id="practice-next-btn" class="btn-secondary">
+                  Next Question
+                </button>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section id="hw-grade-bar" class="grade-filter-section" aria-label="Filter by grade level">
+          <span class="grade-filter-label">Grade Level:</span>
+          <div id="hw-grade-tabs" class="segmented-tabs" role="tablist" aria-label="Select grade level">
+            <button type="button" class="tab-btn is-active" data-hw-grade="All" role="tab" aria-selected="true">
+              All Grades
+            </button>
+            <button type="button" class="tab-btn" data-hw-grade="3rd" role="tab" aria-selected="false">
+              3rd Grade
+            </button>
+            <button type="button" class="tab-btn" data-hw-grade="5th" role="tab" aria-selected="false">
+              5th Grade
+            </button>
+            <button type="button" class="tab-btn" data-hw-grade="7th" role="tab" aria-selected="false">
+              7th Grade
+            </button>
+            <button type="button" class="tab-btn" data-hw-grade="9th" role="tab" aria-selected="false">
+              9th Grade
+            </button>
+            <button type="button" class="tab-btn" data-hw-grade="11th" role="tab" aria-selected="false">
+              11th Grade
+            </button>
+          </div>
+        </section>
+
+        <section id="hw-toolbar" class="toolbar-section" aria-label="Filter assignments">
+          <div id="hw-tabs" class="segmented-tabs" role="tablist" aria-label="Filter by subject">
+            <button type="button" class="tab-btn is-active" data-hw-subject="All" role="tab" aria-selected="true">
+              All
+            </button>
+            <button type="button" class="tab-btn" data-hw-subject="Math" role="tab" aria-selected="false">
+              Math
+            </button>
+            <button type="button" class="tab-btn" data-hw-subject="Science" role="tab" aria-selected="false">
+              Science
+            </button>
+            <button type="button" class="tab-btn" data-hw-subject="History" role="tab" aria-selected="false">
+              History
+            </button>
+            <button type="button" class="tab-btn" data-hw-subject="English" role="tab" aria-selected="false">
+              English
+            </button>
+            <button type="button" class="tab-btn" data-hw-subject="CS" role="tab" aria-selected="false">
+              CS
+            </button>
+          </div>
+
+          <div class="toolbar-right">
+            <label class="search-field" for="hw-search-input">
+              <span class="sr-only">Search assignments</span>
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+              <input
+                id="hw-search-input"
+                type="search"
+                placeholder="Search assignments..."
+                autocomplete="off"
+              />
+            </label>
+            <button type="button" id="hw-theme-toggle-btn" class="btn-secondary">
+              Theme Studio
+            </button>
+          </div>
+        </section>
+
+        <section aria-label="Assignments list">
+          <div id="hw-status" class="status-message" hidden></div>
+          <div id="hw-grid" class="games-grid"></div>
+        </section>
+      </div>
+
+      <!-- Unlocked Games Library View (Requires access code) -->
+      <div id="arcade-view" class="view-stack" hidden>
       <!-- Active Iframe Theatre -->
       <section id="player-section" class="player-section" hidden aria-live="polite">
         <div class="player-bar">
@@ -70,7 +232,14 @@
             <p id="player-subtitle" class="player-subtitle">Category · Controls</p>
           </div>
           <div class="player-controls">
+            <span id="player-coins-indicator" class="player-coins-indicator tabular-nums">+25 Coins / play</span>
             <span id="player-timer" class="player-timer tabular-nums" aria-label="Session timer">00:00</span>
+            <button type="button" id="crt-fx-btn" class="btn-secondary" aria-pressed="false">
+              CRT FX
+            </button>
+            <button type="button" id="frame-glow-btn" class="btn-secondary">
+              Glow: Amber
+            </button>
             <button type="button" id="player-info-btn" class="btn-secondary">
               Game Info
             </button>
@@ -94,10 +263,14 @@
             </button>
           </div>
         </div>
-        <div id="iframe-stage" class="iframe-stage"></div>
+        <div id="iframe-stage" class="iframe-stage" data-glow="amber">
+          <div id="iframe-mount" class="iframe-mount"></div>
+          <div id="iframe-fx-overlay" class="iframe-fx-overlay" aria-hidden="true"></div>
+        </div>
+        <div id="player-quick-switch" class="player-quick-switch" aria-label="Switch game"></div>
         <div class="player-footer">
           <span id="player-controls-tip" class="player-controls-tip">Controls: Keyboard or Mouse</span>
-          <span class="player-esc-hint">Use Fullscreen for maximum viewport</span>
+          <span class="player-esc-hint">Use CRT FX, Frame Glow, or Fullscreen for custom arcade cabinet visuals</span>
         </div>
       </section>
 
@@ -122,18 +295,35 @@
 
           <div class="hero-metrics" aria-label="Catalog summary">
             <div class="metric-item">
-              <span id="metric-total" class="metric-value tabular-nums">7</span>
+              <span id="metric-total" class="metric-value tabular-nums">46</span>
               <span class="metric-label">Games in catalog</span>
             </div>
             <div class="metric-divider" aria-hidden="true"></div>
             <div class="metric-item">
-              <span id="metric-categories" class="metric-value tabular-nums">4</span>
+              <span id="metric-categories" class="metric-value tabular-nums">5</span>
               <span class="metric-label">Genres</span>
             </div>
             <div class="metric-divider" aria-hidden="true"></div>
             <div class="metric-item">
               <span id="metric-saved" class="metric-value tabular-nums">0</span>
               <span class="metric-label">Saved favorites</span>
+            </div>
+          </div>
+
+          <div id="arcade-player-banner" class="player-flair-banner">
+            <div class="player-flair-info">
+              <span class="player-flair-label">Player:</span>
+              <span id="banner-player-name" class="player-flair-name">Guest (Sign in to earn Coins &amp; name styles)</span>
+              <span class="banner-dot" aria-hidden="true">·</span>
+              <span id="banner-coins" class="banner-coins tabular-nums">0 Coins</span>
+            </div>
+            <div class="player-banner-actions">
+              <button type="button" id="banner-themes-btn" class="btn-secondary">
+                Theme Studio
+              </button>
+              <button type="button" id="banner-achievements-btn" class="btn-secondary">
+                Achievements
+              </button>
             </div>
           </div>
         </div>
@@ -152,7 +342,7 @@
               <div class="featured-scrim" aria-hidden="true"></div>
               <div class="featured-overlay">
                 <div class="featured-top-row">
-                  <span id="featured-meta" class="featured-meta">Featured · Sandbox · 1 / 7</span>
+                  <span id="featured-meta" class="featured-meta">Featured · Sandbox · 1 / 46</span>
                   <div class="featured-nav">
                     <button
                       type="button"
@@ -216,6 +406,9 @@
           <button type="button" class="tab-btn" data-category="Action" role="tab" aria-selected="false">
             Action
           </button>
+          <button type="button" class="tab-btn" data-category="Multiplayer" role="tab" aria-selected="false">
+            Multiplayer
+          </button>
           <button type="button" class="tab-btn" data-category="Favorites" role="tab" aria-selected="false">
             Saved
           </button>
@@ -242,7 +435,13 @@
             <option value="hard">Sort: Hardest First</option>
           </select>
           <button type="button" id="theme-toggle-btn" class="btn-secondary">
-            Light Theme
+            Theme Studio
+          </button>
+          <button type="button" id="achievements-btn" class="btn-secondary">
+            Achievements
+          </button>
+          <button type="button" id="back-to-hw-btn" class="btn-secondary">
+            Homework
           </button>
         </div>
       </section>
@@ -259,6 +458,20 @@
               <div class="card-meta">Sandbox · Medium · 15–60 min</div>
               <h3 class="card-title">Minecraft</h3>
               <p class="card-desc">Explore, gather resources, craft tools, and build voxel worlds directly in your browser.</p>
+            </div>
+            <div class="card-footer">
+              <button type="button" class="btn-primary card-play-btn">Play Now</button>
+              <button type="button" class="btn-secondary">Save</button>
+            </div>
+          </article>
+          <article class="game-card" data-game-id="sonic-mania-edition">
+            <div class="card-thumb-wrap">
+              <img class="card-thumb-img" src="./assets/images/game_cover_sonic_mania_1795811447480.jpg" alt="Sonic and More Games cover" loading="lazy" referrerpolicy="no-referrer" />
+            </div>
+            <div class="card-body">
+              <div class="card-meta">Action · Medium · 10–30 min</div>
+              <h3 class="card-title">Sonic and More Games</h3>
+              <p class="card-desc">Play Sonic Mania Edition plus bonus retro arcade games right in your browser.</p>
             </div>
             <div class="card-footer">
               <button type="button" class="btn-primary card-play-btn">Play Now</button>
@@ -351,15 +564,91 @@
           </article>
         </div>
       </section>
+      </div>
     </main>
 
     <footer class="site-footer">
-      <div class="footer-inner">
-        <span>Totally Homework</span>
-        <span aria-hidden="true">·</span>
-        <span>Unblocked Browser Arcade</span>
+      <div class="footer-inner footer-split">
+        <div class="footer-brand-group">
+          <span>Totally Homework</span>
+          <span aria-hidden="true">·</span>
+          <span id="footer-tagline">Student Study Workspace</span>
+        </div>
+        <div class="footer-right-actions">
+          <button type="button" id="unlock-games-btn" class="footer-games-btn">
+            Games
+          </button>
+          <button type="button" id="lock-games-btn" class="footer-games-btn" hidden>
+            Back to Homework
+          </button>
+        </div>
       </div>
     </footer>
+
+    <!-- Homework Study Notes Modal -->
+    <div id="hw-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="hw-modal-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <div class="briefing-header-meta">
+            <span id="hw-modal-kicker" class="briefing-kicker">Math · Due Tomorrow</span>
+            <h2 id="hw-modal-title" class="modal-title">Assignment Notes</h2>
+          </div>
+          <button type="button" id="hw-modal-close-btn" class="btn-secondary">
+            Close
+          </button>
+        </div>
+        <p id="hw-modal-summary" class="briefing-overview"></p>
+        <div class="briefing-tips-section">
+          <h3 class="briefing-subheading">Key Formulas &amp; Study Checklist</h3>
+          <ul id="hw-modal-points" class="briefing-tips"></ul>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="hw-modal-toggle-btn" class="btn-primary">
+            Mark Complete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Games Access Code Modal -->
+    <div id="passcode-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="passcode-title">
+      <div class="modal-panel modal-panel-passcode">
+        <div class="modal-header">
+          <div class="briefing-header-meta">
+            <span class="briefing-kicker">Protected Section</span>
+            <h2 id="passcode-title" class="modal-title">Enter Access Code</h2>
+          </div>
+          <button type="button" id="passcode-close-btn" class="btn-secondary">
+            Close
+          </button>
+        </div>
+
+        <form id="passcode-form" class="passcode-form">
+          <p class="account-copy">
+            Type the access code to unlock the games library.
+          </p>
+          <label class="sr-only" for="passcode-input">Access code</label>
+          <input
+            id="passcode-input"
+            class="passcode-input"
+            type="password"
+            placeholder="Enter access code..."
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+          <p id="passcode-error" class="account-error" hidden role="alert"></p>
+          <div class="modal-actions">
+            <button type="button" id="passcode-cancel-btn" class="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              Unlock Games
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Pre-Game Briefing Modal -->
     <div id="preview-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="preview-title">
@@ -421,7 +710,7 @@
       </div>
     </div>
 
-    <!-- Account Sign-In & Profile Modal -->
+    <!-- Account Sign-In, Profile & Achievements Modal -->
     <div id="account-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
       <div class="modal-panel modal-panel-account">
         <div id="account-signed-out">
@@ -436,7 +725,7 @@
           </div>
 
           <p class="account-copy">
-            Sign in with Google to create your Totally Homework account. Your saved games, recently played titles, and play counts are saved to your profile across devices.
+            Sign in with Google to create your Totally Homework account. Only signed-in players earn achievements from playing and unlock cool animated name styles and titles!
           </p>
 
           <p id="account-error" class="account-error" hidden role="alert"></p>
@@ -448,6 +737,14 @@
               </svg>
               <span>Continue with Google</span>
             </button>
+          </div>
+
+          <div class="achievements-section">
+            <div class="achievements-head">
+              <h3 class="briefing-subheading">Unlockable Name Styles &amp; Achievements</h3>
+              <span class="achievements-count">Sign in required</span>
+            </div>
+            <div id="achievements-guest-list" class="achievements-grid"></div>
           </div>
         </div>
 
@@ -474,7 +771,11 @@
             </div>
           </div>
 
-          <dl class="briefing-specs account-stats">
+          <dl class="briefing-specs account-stats account-stats-five">
+            <div class="spec-item">
+              <dt>Coins</dt>
+              <dd id="account-stat-coins" class="tabular-nums account-coins-dd">0</dd>
+            </div>
             <div class="spec-item">
               <dt>Saved Favorites</dt>
               <dd id="account-stat-saved" class="tabular-nums">0</dd>
@@ -484,10 +785,34 @@
               <dd id="account-stat-plays" class="tabular-nums">0</dd>
             </div>
             <div class="spec-item">
+              <dt>Achievements</dt>
+              <dd id="account-stat-ach" class="tabular-nums">0 / 20</dd>
+            </div>
+            <div class="spec-item">
               <dt>Cloud Sync</dt>
               <dd id="account-sync-status">Active</dd>
             </div>
           </dl>
+
+          <div class="achievements-section">
+            <div class="achievements-head">
+              <h3 class="briefing-subheading">Coin Theme Shop</h3>
+              <button type="button" id="account-open-themes-btn" class="text-action-btn">
+                Open Full Theme Studio
+              </button>
+            </div>
+            <div id="account-themes-list" class="themes-mini-grid"></div>
+          </div>
+
+          <div class="achievements-section">
+            <div class="achievements-head">
+              <h3 class="briefing-subheading">Achievements &amp; Cool Name Styles</h3>
+              <button type="button" id="clear-flair-btn" class="text-action-btn">
+                Reset Name Style
+              </button>
+            </div>
+            <div id="achievements-list" class="achievements-grid"></div>
+          </div>
 
           <p id="account-sync-error" class="account-error" hidden role="alert"></p>
 
@@ -497,6 +822,41 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Theme Studio & Coin Shop Modal -->
+    <div id="theme-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="theme-modal-title">
+      <div class="modal-panel modal-panel-themes">
+        <div class="modal-header">
+          <div class="briefing-header-meta">
+            <span class="briefing-kicker">Visual Atmosphere &amp; Coin Shop</span>
+            <h2 id="theme-modal-title" class="modal-title">Theme Studio</h2>
+          </div>
+          <div class="theme-modal-header-right">
+            <span id="theme-modal-coins" class="theme-coins-readout tabular-nums">0 Coins</span>
+            <button type="button" id="theme-modal-close-btn" class="btn-secondary">
+              Close
+            </button>
+          </div>
+        </div>
+        <p class="account-copy">
+          Switch between free starter themes anytime, or spend Coins earned from playing games, answering study drills, and unlocking achievements to own exclusive themes.
+        </p>
+        <div id="theme-studio-grid" class="themes-grid"></div>
+      </div>
+    </div>
+
+    <!-- Achievement Unlocked Toast -->
+    <div id="achievement-toast" class="achievement-toast" hidden role="status" aria-live="polite">
+      <div class="toast-copy">
+        <span class="toast-kicker">Achievement Unlocked!</span>
+        <strong id="toast-title" class="toast-title">First Spark</strong>
+        <span id="toast-desc" class="toast-desc">Unlocked cool name style</span>
+      </div>
+      <div class="toast-actions">
+        <button type="button" id="toast-equip-btn" class="btn-primary">Equip on Name</button>
+        <button type="button" id="toast-dismiss-btn" class="btn-secondary">Close</button>
       </div>
     </div>
 
